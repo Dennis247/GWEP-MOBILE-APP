@@ -17,6 +17,7 @@
  * License-Filename: LICENSE
  */
 
+import 'package:RefApp/core/utils/colors.dart';
 import 'package:flutter/material.dart';
 
 import 'ui_style.dart';
@@ -71,7 +72,7 @@ class GradientElevatedButton extends StatelessWidget {
               child: DefaultTextStyle(
                 child: title,
                 style: TextStyle(
-                  color: Theme.of(context).colorScheme.primary,
+                  color: AppColors.white,
                   fontSize: UIStyle.hugeFontSize,
                 ),
               ),

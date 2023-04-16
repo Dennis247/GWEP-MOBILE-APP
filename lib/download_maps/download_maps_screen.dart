@@ -51,11 +51,15 @@ class _DownloadMapsScreenState extends State<DownloadMapsScreen> {
   @override
   void initState() {
     super.initState();
-    MapLoaderController controller = Provider.of<MapLoaderController>(context, listen: false);
-    _errorStreamSubscription = controller.getMapUpdateErrors.listen((error) => Util.displayErrorSnackBar(
-          context,
-          Util.formatString(AppLocalizations.of(context)!.downloadMapsErrorText, [error.toString()]),
-        ));
+    MapLoaderController controller =
+        Provider.of<MapLoaderController>(context, listen: false);
+    _errorStreamSubscription = controller.getMapUpdateErrors
+        .listen((error) => Util.displayErrorSnackBar(
+              context,
+              Util.formatString(
+                  AppLocalizations.of(context)!.downloadMapsErrorText,
+                  [error.toString()]),
+            ));
 
     _checkMapUpdate(controller);
   }
@@ -78,12 +82,14 @@ class _DownloadMapsScreenState extends State<DownloadMapsScreen> {
             title: Text(AppLocalizations.of(context)!.downloadMapsTitle),
           ),
           body: FutureBuilder(
-            future: Provider.of<MapLoaderController>(context, listen: false).getDownloadableRegions(),
+            future: Provider.of<MapLoaderController>(context, listen: false)
+                .getDownloadableRegions(),
             builder: (context, snapshot) {
               return ListView(
                 children: [
                   StorageSpace(),
-                  if (controller.mapUpdateState != MapUpdateState.none) MapUpdateProgress(),
+                  if (controller.mapUpdateState != MapUpdateState.none)
+                    MapUpdateProgress(),
                   ..._buildInstalledMapsList(context, snapshot.data),
                   _buildDownloadButton(context),
                 ],
@@ -99,7 +105,8 @@ class _DownloadMapsScreenState extends State<DownloadMapsScreen> {
         return region;
       }
       if (region.childRegions != null) {
-        Region? foundRegion = _findInstalledRegionByID(region.childRegions!, regionId);
+        Region? foundRegion =
+            _findInstalledRegionByID(region.childRegions!, regionId);
         if (foundRegion != null) {
           return foundRegion;
         }
@@ -109,13 +116,15 @@ class _DownloadMapsScreenState extends State<DownloadMapsScreen> {
     return null;
   }
 
-  List<Widget> _buildInstalledMapsList(BuildContext context, List<Region>? regions) {
+  List<Widget> _buildInstalledMapsList(
+      BuildContext context, List<Region>? regions) {
     List<Widget> result = [];
     if (regions == null) {
       return result;
     }
 
-    MapLoaderController controller = Provider.of<MapLoaderController>(context, listen: false);
+    MapLoaderController controller =
+        Provider.of<MapLoaderController>(context, listen: false);
     List<InstalledRegion> installedRegions = controller.getInstalledRegions();
 
     installedRegions.forEach((element) {
@@ -245,7 +254,8 @@ class _DownloadMapsScreenState extends State<DownloadMapsScreen> {
       );
 
   void _openMapRegions(BuildContext context) async {
-    MapLoaderController controller = Provider.of<MapLoaderController>(context, listen: false);
+    MapLoaderController controller =
+        Provider.of<MapLoaderController>(context, listen: false);
 
     controller
         .getDownloadableRegions()
@@ -256,12 +266,15 @@ class _DownloadMapsScreenState extends State<DownloadMapsScreen> {
         .catchError((error) {
       Util.displayErrorSnackBar(
         context,
-        Util.formatString(AppLocalizations.of(context)!.downloadMapsErrorText, [error.toString()]),
+        Util.formatString(AppLocalizations.of(context)!.downloadMapsErrorText,
+            [error.toString()]),
       );
     });
   }
 
-  Widget _buildDownloadedMapsHeader(BuildContext context, MapLoaderController controller) => Container(
+  Widget _buildDownloadedMapsHeader(
+          BuildContext context, MapLoaderController controller) =>
+      Container(
         color: Theme.of(context).dividerColor,
         child: Padding(
           padding: EdgeInsets.all(UIStyle.contentMarginMedium),
@@ -272,7 +285,8 @@ class _DownloadMapsScreenState extends State<DownloadMapsScreen> {
   void _checkMapUpdate(MapLoaderController controller) async {
     try {
       MapUpdateAvailability? availability = await controller.checkMapUpdate();
-      if (availability == MapUpdateAvailability.available && await showMapUpdatesAvailableDialog(context)) {
+      if (availability == MapUpdateAvailability.available &&
+          await showMapUpdatesAvailableDialog(context)) {
         controller.performMapUpdate();
       }
     } catch (error) {

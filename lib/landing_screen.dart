@@ -23,6 +23,7 @@ import 'dart:io';
 
 import 'package:RefApp/common/file_utility.dart';
 import 'package:RefApp/core/model/abate_details.dart';
+import 'package:RefApp/core/utils/navigator.dart';
 import 'package:RefApp/core/widgets/loading_indicator.dart';
 import 'package:animated_floating_buttons/widgets/animated_floating_action_button.dart';
 import 'package:file_picker/file_picker.dart';
@@ -49,10 +50,13 @@ import 'common/ui_style.dart';
 import 'common/util.dart' as Util;
 import 'core/data/dataStore.dart';
 import 'core/model/water_body_points.dart';
+import 'core/screen/login_screen.dart';
 import 'core/utils/colors.dart';
 import 'core/utils/constants.dart';
+import 'core/viewmodel/login_viewmodel.dart';
 import 'core/viewmodel/water_point_viewmodel.dart';
 import 'core/widgets/app_button.dart';
+import 'core/widgets/app_drawer.dart';
 import 'core/widgets/bottom_sheet.dart';
 import 'core/widgets/bottom_sheet/global_dialogue.dart';
 import 'core/widgets/bottom_sheet/search_bottom_sheet.dart';
@@ -68,7 +72,7 @@ import 'search/search_popup.dart';
 
 /// The home screen of the application.
 class LandingScreen extends StatefulWidget {
-  static const String navRoute = "xxxxxxx";
+  static const String navRoute = "landing-screen";
 
   LandingScreen({Key? key}) : super(key: key);
 
@@ -138,7 +142,7 @@ class _LandingScreenState extends State<LandingScreen> with Positioning {
               ),
             ]),
             floatingActionButton: _mapInitSuccess ? _buildFAB2() : null,
-            drawer: _buildDrawer(context, preferences),
+            drawer: buildAppDrawer(preferences),
             extendBodyBehindAppBar: true,
             onDrawerChanged: (isOpened) => _dismissLocationWarningPopup(),
           ),
@@ -299,7 +303,7 @@ class _LandingScreenState extends State<LandingScreen> with Positioning {
                             title: 'Navigate to Abate Point',
                             isLoading: false,
                             onTap: () async {
-                              _showRoutingScreen(WayPointInfo(
+                              _showRoutingScreen(WayPointInfo.withCoordinates(
                                   coordinates: GeoCoordinates(
                                 element.latitude!.toDouble(),
                                 element.longitude!.toDouble(),
@@ -364,7 +368,7 @@ class _LandingScreenState extends State<LandingScreen> with Positioning {
                             title: 'Navigate to water body',
                             isLoading: false,
                             onTap: () async {
-                              _showRoutingScreen(WayPointInfo(
+                              _showRoutingScreen(WayPointInfo.withCoordinates(
                                   coordinates: GeoCoordinates(
                                 element.latitude!.toDouble(),
                                 element.longitude!.toDouble(),
@@ -425,6 +429,17 @@ class _LandingScreenState extends State<LandingScreen> with Positioning {
     return Colors.blue;
   }
 
+  void _resetMapPin() {
+    var oldWIdget =
+        context.read<WaterPointViewModel>().oldSelectedWaterBodyPoint;
+    var newWidget = context.read<WaterPointViewModel>().selectedWaterBodyPoint;
+    _hereMapController.unpinWidget(_mapPin(oldWIdget!));
+    _hereMapController.pinWidget(
+        _mapPin(newWidget!),
+        GeoCoordinates(
+            newWidget.latitude!.toDouble(), newWidget.longitude!.toDouble()));
+  }
+
   Widget waterBodyStatus(
       {required String title, required id, required String? status}) {
     context.read<WaterPointViewModel>().selectedWaterBodyId = id;
@@ -460,7 +475,9 @@ class _LandingScreenState extends State<LandingScreen> with Positioning {
                           onTap: () {
                             value.updateWaterBodyStatus(
                                 selectedValue: Constants.waterBodyPresent);
-                            //  _getWaterPointDatUpdatate();
+                            _resetMapPin();
+                            //todo remove the update water body and insert on map
+
                             Navigator.of(context).pop();
                           },
                           isSelected: value.selectedWaterBodyStatus ==
@@ -474,7 +491,7 @@ class _LandingScreenState extends State<LandingScreen> with Positioning {
                           onTap: () {
                             value.updateWaterBodyStatus(
                                 selectedValue: Constants.wetDepresssion);
-                            //   _getWaterPointDatUpdatate();
+                            _resetMapPin();
                             Navigator.of(context).pop();
                           },
                           isSelected: value.selectedWaterBodyStatus ==
@@ -488,7 +505,7 @@ class _LandingScreenState extends State<LandingScreen> with Positioning {
                           onTap: () {
                             value.updateWaterBodyStatus(
                                 selectedValue: Constants.dryDepressionStatus);
-                            // _getWaterPointDatUpdatate();
+                            _resetMapPin();
                             Navigator.of(context).pop();
                           },
                           isSelected: value.selectedWaterBodyStatus ==
@@ -502,7 +519,7 @@ class _LandingScreenState extends State<LandingScreen> with Positioning {
                           onTap: () {
                             value.updateWaterBodyStatus(
                                 selectedValue: Constants.noWaterBody);
-                            //  _getWaterPointDatUpdatate();
+                            _resetMapPin();
                             Navigator.of(context).pop();
                           },
                           isSelected: value.selectedWaterBodyStatus ==
@@ -565,8 +582,9 @@ class _LandingScreenState extends State<LandingScreen> with Positioning {
       if (_consentState != ConsentUserReply.granted)
         ListTile(
           title: Text(
-            appLocalizations.userConsentDescription,
-            style: TextStyle(color: colorScheme.onSecondary),
+            '',
+            style:
+                TextStyle(color: AppColors.black, fontWeight: FontWeight.bold),
           ),
         ),
       ListTile(
@@ -576,23 +594,25 @@ class _LandingScreenState extends State<LandingScreen> with Positioning {
             Icon(
               Icons.privacy_tip,
               color: _consentState == ConsentUserReply.granted
-                  ? UIStyle.acceptedConsentColor
-                  : UIStyle.revokedConsentColor,
+                  ? AppColors.green
+                  : AppColors.redColor,
             ),
           ],
         ),
         title: Text(
-          appLocalizations.userConsentTitle,
-          style: TextStyle(color: colorScheme.onPrimary),
+          'Consent',
+          style: TextStyle(color: AppColors.black, fontWeight: FontWeight.bold),
         ),
         subtitle: _consentState == ConsentUserReply.granted
             ? Text(
                 appLocalizations.consentGranted,
-                style: TextStyle(color: UIStyle.acceptedConsentColor),
+                style: TextStyle(
+                    color: AppColors.black, fontWeight: FontWeight.bold),
               )
             : Text(
-                appLocalizations.consentDenied,
-                style: TextStyle(color: UIStyle.revokedConsentColor),
+                '${appLocalizations.consentDenied}',
+                style: TextStyle(
+                    color: AppColors.black, fontWeight: FontWeight.bold),
               ),
         trailing: Icon(
           Icons.arrow_forward,
@@ -1325,6 +1345,7 @@ class _LandingScreenState extends State<LandingScreen> with Positioning {
         ? lastKnownLocation!.coordinates
         : Positioning.initPosition;
 
+//Todo remove current position
     currentPosition = GeoCoordinates(7.629322846, 34.37388925);
 
     await Navigator.of(context).pushNamed(
@@ -1351,5 +1372,182 @@ class _LandingScreenState extends State<LandingScreen> with Positioning {
 
   void _updateConsentState(PositioningEngine positioningEngine) {
     setState(() => _consentState = positioningEngine.userConsentState);
+  }
+
+  Widget buildAppDrawer(AppPreferences preferences) {
+    AppLocalizations appLocalizations = AppLocalizations.of(context)!;
+    return Drawer(
+      child: SizedBox(
+        height: 100.0.h,
+        width: 100.0.w,
+        child: Column(
+          children: [
+            Container(
+              height: 23.0.h,
+              width: 100.0.w,
+              color: AppColors.primaryColor,
+              child: Padding(
+                padding:
+                    EdgeInsets.symmetric(horizontal: 3.0.w, vertical: 2.0.h),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    CircleAvatar(
+                      radius: 4.0.h,
+                      backgroundColor: AppColors.white,
+                      child: Text(
+                        "${DataStore.userAccount?.firstName![0]}",
+                        style: TextStyle(
+                            fontWeight: FontWeight.bold, fontSize: 4.0.h),
+                      ),
+                    ),
+                    Text(
+                      "${DataStore.userAccount?.firstName} ${DataStore.userAccount?.lastName}",
+                      style: TextStyle(
+                          color: AppColors.white,
+                          fontSize: 3.0.h,
+                          fontWeight: FontWeight.bold),
+                    ),
+                    Text(
+                      "${DataStore.userAccount?.phoneNumber}",
+                      style: TextStyle(
+                          fontSize: 2.0.h,
+                          fontWeight: FontWeight.w500,
+                          color: AppColors.white),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+            Expanded(
+                child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Expanded(
+                    child: Column(
+                  children: [
+                    _buildDrawerTile(
+                        context: context,
+                        onTap: () {
+                          AppNavigator.pushAndRemoveUntil(
+                              context, LandingScreen());
+                        },
+                        iconData: FontAwesomeIcons.mapPin,
+                        title: "Water Detection Points"),
+                    _buildDrawerTile(
+                        context: context,
+                        onTap: () async {
+                          Navigator.of(context).pop();
+                          await context
+                              .read<WaterPointViewModel>()
+                              .syncWaterBodyData();
+                        },
+                        iconData: FontAwesomeIcons.recycle,
+                        title: "Synchronize Data"),
+                    _buildDrawerTile(
+                        context: context,
+                        onTap: () async {
+                          Navigator.of(context)
+                            ..pop()
+                            ..pushNamed(DownloadMapsScreen.navRoute);
+                        },
+                        iconData: FontAwesomeIcons.mapLocation,
+                        title: "Download Map"),
+                    SwitchListTile(
+                      title: Row(
+                        children: [
+                          Icon(FontAwesomeIcons.powerOff),
+                          SizedBox(
+                            width: 7.0.w,
+                          ),
+                          Text(
+                            'Use offline',
+                            style: TextStyle(
+                                fontWeight: FontWeight.bold,
+                                fontSize: 1.8.h,
+                                color: AppColors.black),
+                          ),
+                        ],
+                      ),
+                      value: preferences.useAppOffline,
+                      onChanged: (newValue) async {
+                        if (newValue) {
+                          MapLoaderController controller =
+                              Provider.of<MapLoaderController>(context,
+                                  listen: false);
+                          if (controller.getInstalledRegions().isEmpty) {
+                            Navigator.of(context).pop();
+                            if (!await Util.showCommonConfirmationDialog(
+                              context: context,
+                              title: appLocalizations.offlineAppMapsDialogTitle,
+                              message:
+                                  appLocalizations.offlineAppMapsDialogMessage,
+                              actionTitle: appLocalizations.downloadMapsTitle,
+                            )) {
+                              return;
+                            }
+                            Navigator.of(context)
+                                .pushNamed(DownloadMapsScreen.navRoute);
+                          }
+                        }
+                        preferences.useAppOffline = newValue;
+                      },
+                    ),
+                    ..._buildUserConsentItems(context),
+                    SizedBox(
+                      height: 5.0.h,
+                    ),
+                    _buildDrawerTile(
+                        context: context,
+                        onTap: () async {
+                          Navigator.of(context).pop();
+                          await context.read<LoginViewModel>().logOutUser();
+
+                          AppNavigator.pushAndRemoveUntil(
+                              context, LoginScreen());
+                        },
+                        iconData: FontAwesomeIcons.arrowRightFromBracket,
+                        color: AppColors.redColor,
+                        title: "Log Out"),
+                  ],
+                )),
+                Padding(
+                  padding: const EdgeInsets.all(10.0),
+                  child: SizedBox(
+                    child: Text(
+                      Constants.appVersion,
+                      style: TextStyle(fontWeight: FontWeight.bold),
+                    ),
+                  ),
+                ),
+              ],
+            ))
+          ],
+        ),
+      ),
+    );
+  }
+
+  _buildDrawerTile(
+      {required BuildContext context,
+      required String title,
+      required Function onTap,
+      required IconData iconData,
+      Color? color}) {
+    return ListTile(
+      leading: Icon(
+        iconData,
+        color: color ?? AppColors.greyColor,
+        size: 2.8.h,
+      ),
+      title: Text(
+        title,
+        style: TextStyle(
+            fontWeight: FontWeight.bold, color: color ?? AppColors.black),
+      ),
+      onTap: () {
+        onTap();
+      },
+    );
   }
 }

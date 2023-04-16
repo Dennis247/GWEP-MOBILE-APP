@@ -17,6 +17,7 @@
  * License-Filename: LICENSE
  */
 
+import 'package:RefApp/core/utils/colors.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_gen/gen_l10n/app_localizations.dart';
 import 'package:flutter_svg/flutter_svg.dart';
@@ -38,7 +39,7 @@ Future<bool?> askForPositionSource(BuildContext context) async {
           child: ListTile(
             leading: SvgPicture.asset(
               "assets/route.svg",
-              color: Theme.of(context).colorScheme.onSecondary,
+              color: AppColors.primaryColor,
               width: UIStyle.mediumIconSize,
               height: UIStyle.mediumIconSize,
             ),
@@ -48,7 +49,10 @@ Future<bool?> askForPositionSource(BuildContext context) async {
         ),
         SimpleDialogOption(
           child: ListTile(
-            leading: Icon(Icons.gps_fixed),
+            leading: Icon(
+              Icons.gps_fixed,
+              color: AppColors.primaryColor,
+            ),
             title: Text(appLocalizations.realLocationSourceTitle),
           ),
           onPressed: () => Navigator.of(context).pop(false),

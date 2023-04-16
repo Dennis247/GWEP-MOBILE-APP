@@ -53,6 +53,9 @@ dependencies:
   sizer:
   font_awesome_flutter:
   animated_floating_buttons:
+  flutter_native_splash:
+  flutter_launcher_icons:
+  secure_shared_preferences: ^0.0.4
 
 
 
@@ -64,7 +67,17 @@ dev_dependencies:
   flutter_test:
     sdk: flutter
   hive: ^2.2.3
-  hive_flutter: ^1.1.0  
+  hive_flutter: ^1.1.0
+
+flutter_native_splash:
+  color: "#4641D7"
+  image: assets/images/applogo.png    
+
+flutter_icons:
+  android: "launcher_icon"
+  ios: true
+  image_path: "assets/images/applogo.png"
+  min_sdk_android: 21 # android min sdk min:16, default 21      
 
 # For information on the generic Dart part of this file, see the
 # following page: https://dart.dev/tools/pub/pubspec
@@ -83,6 +96,9 @@ flutter:
     - assets/maneuvers/light/
     - assets/maneuvers/dark/png/
     - assets/maneuvers/light/png/
+    - assets/images/
+
+
 
   # To add assets to your application, add an assets section, like this:
   # assets:

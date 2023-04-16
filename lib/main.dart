@@ -17,6 +17,8 @@
  * License-Filename: LICENSE
  */
 
+import 'package:RefApp/core/viewmodel/login_viewmodel.dart';
+import 'package:RefApp/core/viewmodel/register_viewmodel.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_gen/gen_l10n/app_localizations.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
@@ -32,6 +34,7 @@ import 'common/custom_map_style_settings.dart';
 import 'common/ui_style.dart';
 import 'core/data/tables/hubs_data/hub_table.dart';
 import 'core/data/tables/water_point_data/water_body_point_table.dart';
+import 'core/screen/splash_screen.dart';
 import 'core/services/water_point_service.dart';
 import 'core/utils/constants.dart';
 import 'core/utils/theme.dart';
@@ -101,6 +104,8 @@ class _MyAppState extends State<MyApp> {
           ChangeNotifierProvider(create: (context) => WaterPointViewModel()),
           ChangeNotifierProvider(
               create: (context) => SearchBottomSheetViewModel()),
+          ChangeNotifierProvider(create: (context) => LoginViewModel()),
+          ChangeNotifierProvider(create: (context) => RegisterViewModel()),
         ],
         child: MaterialApp(
           localizationsDelegates: [
@@ -118,6 +123,7 @@ class _MyAppState extends State<MyApp> {
               AppLocalizations.of(context)!.appTitle,
           onGenerateRoute: (RouteSettings settings) {
             Map<String, WidgetBuilder> routes = {
+              SplashScreen.navRoute: (BuildContext context) => SplashScreen(),
               LandingScreen.navRoute: (BuildContext context) => LandingScreen(),
               SearchResultsScreen.navRoute: (BuildContext context) {
                 List<dynamic> arguments = settings.arguments as List<dynamic>;
@@ -171,7 +177,7 @@ class _MyAppState extends State<MyApp> {
               settings: settings,
             );
           },
-          initialRoute: LandingScreen.navRoute,
+          initialRoute: SplashScreen.navRoute,
         ),
       ),
     );

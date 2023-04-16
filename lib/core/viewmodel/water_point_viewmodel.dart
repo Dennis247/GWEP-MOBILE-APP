@@ -127,6 +127,7 @@ class WaterPointViewModel extends ChangeNotifier {
   String selectedWaterBodyStatus = "";
 
   WaterBodyPoint? selectedWaterBodyPoint;
+  WaterBodyPoint? oldSelectedWaterBodyPoint;
 
   setSelctedWaterBodyStatus(
       {required vSelectedWaterBodyId,
@@ -138,6 +139,7 @@ class WaterPointViewModel extends ChangeNotifier {
     selectedIsWaterBodyVisited = vSelectedIsWaterBodyVisited;
     selctedIsWaterBodyPresent = vSelctedIsWaterBodyPresent;
     selectedWaterBodyPoint = vWaterBodyPoint;
+    oldSelectedWaterBodyPoint = selectedWaterBodyPoint;
     selectedWaterBodyStatus = vWaterBodyPoint.waterBodyStatus!;
     notifyListeners();
   }
@@ -284,6 +286,7 @@ class WaterPointViewModel extends ChangeNotifier {
     } catch (e) {
       log(e.toString());
     }
+    notifyListeners();
   }
 
   bool _isDownloadingData = false;

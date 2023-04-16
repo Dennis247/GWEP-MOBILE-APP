@@ -17,6 +17,7 @@
  * License-Filename: LICENSE
  */
 
+import 'package:RefApp/core/utils/colors.dart';
 import 'package:flutter/material.dart';
 
 import 'ui_style.dart';
@@ -38,7 +39,7 @@ class ResetLocationButton extends StatelessWidget {
       height: UIStyle.mediumButtonHeight,
       child: FloatingActionButton(
         heroTag: null,
-        backgroundColor: Theme.of(context).backgroundColor,
+        backgroundColor: AppColors.black,
         child: Icon(Icons.gps_fixed),
         onPressed: onPressed,
       ),
