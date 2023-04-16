@@ -435,7 +435,7 @@ class WaterPointViewModel extends ChangeNotifier {
       var ct = waterBodyPoints[0];
       center = LatLng(ct.latitude!.toDouble(), ct.longitude!.toDouble());
     }
-    _isLoadingWaterPointData = false;
+    setisLoadingWaterPointDataState(false);
 
     //set centre for abate point
   }

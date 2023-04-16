@@ -36,8 +36,7 @@ typedef LocationUpdatedCallback = void Function(Location location);
 /// Mixin that implements logic for positioning. It manages the current location marker and provides location updates.
 mixin Positioning {
   static const double initDistanceToEarth = 8000; // meters
-  static final GeoCoordinates initPosition =
-      GeoCoordinates(52.530932, 13.384915);
+  static final GeoCoordinates initPosition = GeoCoordinates(7.60929, 34.40577);
 
   late HereMapController _hereMapController;
   PositioningEngine? _positioningEngine;

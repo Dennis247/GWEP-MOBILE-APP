@@ -165,9 +165,9 @@ class _RoutingScreenState extends State<RoutingScreen>
                   key: _hereMapKey,
                   onMapCreated: _onMapCreated,
                 ),
-                if (!Provider.of<AppPreferences>(context, listen: false)
-                    .useAppOffline)
-                  _buildTrafficButton(context),
+                // if (!Provider.of<AppPreferences>(context, listen: false)
+                //     .useAppOffline)
+                //   _buildTrafficButton(context),
               ],
             ),
             extendBodyBehindAppBar: true,
@@ -422,6 +422,16 @@ class _RoutingScreenState extends State<RoutingScreen>
   }
 
   _addRouteToMap(Routing.Route route, bool selected) {
+    route.geometry.vertices.insert(
+        0,
+        GeoCoordinates(
+            widget.currentPosition.latitude, widget.currentPosition.longitude));
+    route.geometry.vertices.add(new GeoCoordinates(
+        widget.destination.coordinates.latitude,
+        widget.destination.coordinates.longitude));
+
+    //todo set start and end of route
+
     MapPolyline routeMapPolyline = MapPolyline(
       route.geometry,
       UIStyle.routeLineWidth,

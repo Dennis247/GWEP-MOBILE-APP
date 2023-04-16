@@ -140,6 +140,11 @@ class _LandingScreenState extends State<LandingScreen> with Positioning {
                 key: _hereMapKey,
                 onMapCreated: _onMapCreated,
               ),
+              Consumer<WaterPointViewModel>(
+                  builder: (context, value, child) =>
+                      value.isLoadingWaterPointData
+                          ? LoadingIndicator2()
+                          : SizedBox())
             ]),
             floatingActionButton: _mapInitSuccess ? _buildFAB2() : null,
             drawer: buildAppDrawer(preferences),
@@ -210,39 +215,22 @@ class _LandingScreenState extends State<LandingScreen> with Positioning {
   }
 
   void setMarkers(List<WaterBodyPoint> waterBodyPoints) {
-    List<WidgetPin> _pins = [];
-
-    waterBodyPoints.take(300).forEach((element) {
+    waterBodyPoints.take(250).forEach((element) {
       _hereMapController.pinWidget(
           _mapPin(element),
           new GeoCoordinates(
               element.latitude!.toDouble(), element.longitude!.toDouble()));
     });
 
-    //navigate to the centre of selected area.
-    var cWaterBody = waterBodyPoints[0];
-    var centre = new GeoCoordinates(
-        cWaterBody.latitude!.toDouble(), cWaterBody.longitude!.toDouble());
-
-    //_flyTo(centre);
-
-    _hereMapController.camera.lookAtPointWithMeasure(
-      centre,
-      MapMeasure(MapMeasureKind.distance, 512000),
-    );
-
-    // setState(() {
-    //   _hereMapController.widgetPins.addAll(_pins);
-    // });
-  }
-
-  void _flyTo(GeoCoordinates geoCoordinates) {
-    GeoCoordinatesUpdate geoCoordinatesUpdate =
-        GeoCoordinatesUpdate.fromGeoCoordinates(geoCoordinates);
-    double bowFactor = 1;
-    MapCameraAnimation animation = MapCameraAnimationFactory.flyTo(
-        geoCoordinatesUpdate, bowFactor, Duration(seconds: 3));
-    _hereMapController.camera.startAnimation(animation);
+    if (waterBodyPoints.isNotEmpty) {
+      var cWaterBody = waterBodyPoints[0];
+      var centre = new GeoCoordinates(
+          cWaterBody.latitude!.toDouble(), cWaterBody.longitude!.toDouble());
+      _hereMapController.camera.lookAtPointWithMeasure(
+        centre,
+        MapMeasure(MapMeasureKind.distance, 512000),
+      );
+    }
   }
 
   Widget _mapPin(WaterBodyPoint element) {
@@ -416,7 +404,7 @@ class _LandingScreenState extends State<LandingScreen> with Positioning {
 
   Color getMarkerColor(WaterBodyPoint waterBodyPoint) {
     if (waterBodyPoint.isAbateKnownPoint!) {
-      return Colors.pink;
+      return Colors.purple;
     } else if (waterBodyPoint.waterBodyStatus == Constants.wetDepresssion ||
         waterBodyPoint.waterBodyStatus == Constants.dryDepressionStatus) {
       return Colors.yellow;
@@ -438,6 +426,47 @@ class _LandingScreenState extends State<LandingScreen> with Positioning {
         _mapPin(newWidget!),
         GeoCoordinates(
             newWidget.latitude!.toDouble(), newWidget.longitude!.toDouble()));
+  }
+
+  _resetMapItems({required List<WaterBodyPoint> waterBodyPoints}) {
+    _hereMapController.widgetPins.forEach((x) {
+      _hereMapController.widgetPins
+          .firstWhere((element) => element == x)
+          .unpin();
+    });
+    _hereMapController.widgetPins.clear();
+    setMarkers(waterBodyPoints);
+  }
+
+  Future<void> _filterConfidence(String confidence) async {
+    final watrBodyVm = context.read<WaterPointViewModel>();
+    watrBodyVm.filterByConfidence(confidenceLevl: confidence).then((value) {
+      _resetMapItems(waterBodyPoints: watrBodyVm.waterBodyPoints);
+    });
+  }
+
+  Future<void> _filterByAbatePoints() async {
+    final watrBodyVm = context.read<WaterPointViewModel>();
+
+    watrBodyVm.filterByAbatePoins().then((value) {
+      _resetMapItems(waterBodyPoints: watrBodyVm.waterBodyPoints);
+    });
+  }
+
+  Future<void> _filterPhase(String phase) async {
+    final watrBodyVm = context.read<WaterPointViewModel>();
+    watrBodyVm.filterByPhase(phase: phase).then((value) {
+      _resetMapItems(waterBodyPoints: watrBodyVm.waterBodyPoints);
+    });
+  }
+
+  Future<void> _filterVisitations(String visitation) async {
+    final watrBodyVm = context.read<WaterPointViewModel>();
+    watrBodyVm
+        .filterByVisitationStatus(visitationStaus: visitation)
+        .then((value) {
+      _resetMapItems(waterBodyPoints: watrBodyVm.waterBodyPoints);
+    });
   }
 
   Widget waterBodyStatus(
@@ -802,45 +831,6 @@ class _LandingScreenState extends State<LandingScreen> with Positioning {
     );
   }
 
-  Widget _buildFAB(BuildContext context) {
-    return Row(
-      mainAxisSize: MainAxisSize.min,
-      children: [
-        Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            if (!enableMapUpdate)
-              ResetLocationButton(
-                onPressed: _resetCurrentPosition,
-              ),
-            Container(
-              height: UIStyle.contentMarginMedium,
-            ),
-            FloatingActionButton(
-              child: ClipOval(
-                child: Ink(
-                  width: UIStyle.bigButtonHeight,
-                  height: UIStyle.bigButtonHeight,
-                  decoration: BoxDecoration(
-                    shape: BoxShape.circle,
-                    gradient: LinearGradient(
-                      colors: [
-                        UIStyle.buttonPrimaryColor,
-                        UIStyle.buttonSecondaryColor,
-                      ],
-                    ),
-                  ),
-                  child: Icon(Icons.search),
-                ),
-              ),
-              onPressed: () => _onSearch(context),
-            ),
-          ],
-        ),
-      ],
-    );
-  }
-
   Widget _buildFAB2() {
     final wvm = context.read<WaterPointViewModel>();
     return AnimatedFloatingActionButton(
@@ -879,7 +869,7 @@ class _LandingScreenState extends State<LandingScreen> with Positioning {
                         _buildCardWidget(
                             bgColor: AppColors.green,
                             onTap: () {
-                              //   _filterConfidence('all');
+                              _filterConfidence('all');
                               Navigator.of(context).pop();
                             },
                             title: 'All',
@@ -890,7 +880,7 @@ class _LandingScreenState extends State<LandingScreen> with Positioning {
                         _buildCardWidget(
                             bgColor: AppColors.primaryColor,
                             onTap: () {
-                              // _filterConfidence('high');
+                              _filterConfidence('high');
                               Navigator.of(context).pop();
                             },
                             title: 'High Confidence',
@@ -901,7 +891,7 @@ class _LandingScreenState extends State<LandingScreen> with Positioning {
                         _buildCardWidget(
                             bgColor: Colors.purple,
                             onTap: () {
-                              //    _filterConfidence('medium');
+                              _filterConfidence('medium');
                               Navigator.of(context).pop();
                             },
                             title: 'Medium Confidence',
@@ -912,8 +902,8 @@ class _LandingScreenState extends State<LandingScreen> with Positioning {
                         _buildCardWidget(
                             bgColor: AppColors.redColor,
                             onTap: () {
-                              // _filterConfidence('low');
                               Navigator.of(context).pop();
+                              _filterConfidence('low');
                             },
                             title: 'Low Confidence',
                             iconData: FontAwesomeIcons.moon),
@@ -934,8 +924,8 @@ class _LandingScreenState extends State<LandingScreen> with Positioning {
               iconData: FontAwesomeIcons.mapLocation,
               onTap: () async {
                 fabKey.currentState!.closeFABs();
-                // value.setSelectedHubArea(Constants.abatePoints);
-                // _filterByAbatePoints();
+                wvm.setSelectedHubArea(Constants.abatePoints);
+                _filterByAbatePoints();
               },
               title: 'Abate Points'),
           getFabWidget(
@@ -952,7 +942,7 @@ class _LandingScreenState extends State<LandingScreen> with Positioning {
                         _buildCardWidget(
                             bgColor: AppColors.green,
                             onTap: () {
-                              //   _filterPhase('all');
+                              _filterPhase('all');
                               Navigator.of(context).pop();
                             },
                             title: 'All',
@@ -963,7 +953,7 @@ class _LandingScreenState extends State<LandingScreen> with Positioning {
                         _buildCardWidget(
                             bgColor: AppColors.dashPurple,
                             onTap: () {
-                              //  _filterPhase(Constants.underCanoy);
+                              _filterPhase(Constants.underCanoy);
                               Navigator.of(context).pop();
                             },
                             title: 'Under Canopy',
@@ -974,7 +964,7 @@ class _LandingScreenState extends State<LandingScreen> with Positioning {
                         _buildCardWidget(
                             bgColor: Colors.blue,
                             onTap: () {
-                              // _filterPhase(Constants.opneSky);
+                              _filterPhase(Constants.opneSky);
                               Navigator.of(context).pop();
                             },
                             title: 'Open sky',
@@ -1000,7 +990,7 @@ class _LandingScreenState extends State<LandingScreen> with Positioning {
                         _buildCardWidget(
                             bgColor: AppColors.green,
                             onTap: () {
-                              //   _filterVisitations('all');
+                              _filterVisitations('all');
                               Navigator.of(context).pop();
                             },
                             title: 'All',
@@ -1011,7 +1001,7 @@ class _LandingScreenState extends State<LandingScreen> with Positioning {
                         _buildCardWidget(
                             bgColor: AppColors.dashPurple,
                             onTap: () {
-                              //  _filterVisitations(Constants.visited);
+                              _filterVisitations(Constants.visited);
                               Navigator.of(context).pop();
                             },
                             title: 'Visisted',
@@ -1022,7 +1012,7 @@ class _LandingScreenState extends State<LandingScreen> with Positioning {
                         _buildCardWidget(
                             bgColor: AppColors.redColor,
                             onTap: () {
-                              //   _filterVisitations(Constants.notVisited);
+                              _filterVisitations(Constants.notVisited);
                               Navigator.of(context).pop();
                             },
                             title: 'Not Visited',
@@ -1346,7 +1336,7 @@ class _LandingScreenState extends State<LandingScreen> with Positioning {
         : Positioning.initPosition;
 
 //Todo remove current position
-    currentPosition = GeoCoordinates(7.629322846, 34.37388925);
+    ///  currentPosition = GeoCoordinates(7.629322846, 34.37388925);
 
     await Navigator.of(context).pushNamed(
       RoutingScreen.navRoute,
