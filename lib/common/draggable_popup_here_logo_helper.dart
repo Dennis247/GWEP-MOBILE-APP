@@ -47,17 +47,21 @@ class DraggablePopupHereLogoHelper extends StatefulWidget {
   }) : super(key: key);
 
   @override
-  _DraggablePopupHereLogoHelperState createState() => _DraggablePopupHereLogoHelperState();
+  _DraggablePopupHereLogoHelperState createState() =>
+      _DraggablePopupHereLogoHelperState();
 }
 
-class _DraggablePopupHereLogoHelperState extends State<DraggablePopupHereLogoHelper> {
+class _DraggablePopupHereLogoHelperState
+    extends State<DraggablePopupHereLogoHelper> {
   bool _processEvents = true;
 
   @override
   void initState() {
     super.initState();
-    SchedulerBinding.instance.scheduleFrameCallback((timeStamp) => SchedulerBinding.instance.addPostFrameCallback(
-        (timeStamp) => _updateHereLogoPosition(widget.draggableScrollableSheet.initialChildSize)));
+    SchedulerBinding.instance.scheduleFrameCallback((timeStamp) =>
+        SchedulerBinding.instance.addPostFrameCallback((timeStamp) =>
+            _updateHereLogoPosition(
+                widget.draggableScrollableSheet.initialChildSize)));
   }
 
   @override
@@ -83,13 +87,17 @@ class _DraggablePopupHereLogoHelperState extends State<DraggablePopupHereLogoHel
 
     final double height = MediaQuery.of(context).size.height;
     final double popupHeight = height * extent;
-    final RenderBox box = widget.hereMapKey.currentContext!.findRenderObject() as RenderBox;
-    final double margin = (popupHeight - (height - box.paintBounds.bottom)) * widget.hereMapController.pixelScale;
+    final RenderBox box =
+        widget.hereMapKey.currentContext!.findRenderObject() as RenderBox;
+    final double margin = (popupHeight - (height - box.paintBounds.bottom)) *
+        widget.hereMapController.pixelScale;
 
     if (margin >= 0) {
-      widget.hereMapController.setWatermarkPlacement(WatermarkPlacement.bottomCenter, margin.truncate());
+      widget.hereMapController.setWatermarkPlacement(
+          WatermarkPlacement.bottomCenter, margin.truncate());
     } else {
-      widget.hereMapController.setWatermarkPlacement(WatermarkPlacement.bottomLeft, 0);
+      widget.hereMapController
+          .setWatermarkPlacement(WatermarkPlacement.bottomLeft, 0);
     }
   }
 }

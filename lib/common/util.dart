@@ -17,6 +17,7 @@
  * License-Filename: LICENSE
  */
 
+import 'package:RefApp/core/data/dataStore.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_gen/gen_l10n/app_localizations.dart';
 import 'package:here_sdk/core.dart';
@@ -326,7 +327,7 @@ void loadMapScene(
           mapSceneLoadSceneCallback,
         )
       : hereMapController.mapScene.loadSceneForMapScheme(
-          MapScheme.normalDay,
+          DataStore.mapScheme,
           mapSceneLoadSceneCallback,
         );
 }

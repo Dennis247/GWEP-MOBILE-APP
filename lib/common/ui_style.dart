@@ -60,8 +60,8 @@ class UIStyle {
   static const Color addWayPointPopupForegroundColor = Color(0xFFFFFFFF);
   static const Color removeWayPointBackgroundColor = Color(0xFFFB0425);
   static const Color removeWayPointIconColor = Color(0xFFFFFFFF);
-  static const double routeLineWidth = 20;
-  static const double routeOutLineWidth = 5;
+  static const double routeLineWidth = 10;
+  static const double routeOutLineWidth = 2;
 
   static const int locationMarkerSize = 30; // logical pixels
   static const int searchMarkerSize = 30; // logical pixels

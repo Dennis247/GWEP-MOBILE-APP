@@ -22,6 +22,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_gen/gen_l10n/app_localizations.dart';
 import 'package:here_sdk/maploader.dart';
 import 'package:provider/provider.dart';
+import 'package:sizer/sizer.dart';
 
 import 'map_loader_controller.dart';
 import 'map_region_tile_widget.dart';
@@ -62,16 +63,21 @@ class _MapRegionsListScreenState extends State<MapRegionsListScreen> {
 
   @override
   Widget build(BuildContext context) => Consumer<MapLoaderController>(
-        builder: (context, model, child) => Scaffold(
-          resizeToAvoidBottomInset: false,
-          appBar: AppBar(
-            leading: IconButton(
-              icon: Icon(Icons.arrow_back),
-              onPressed: () => Navigator.of(context).pop(),
+        builder: (context, model, child) => SafeArea(
+          child: Scaffold(
+            resizeToAvoidBottomInset: false,
+            appBar: AppBar(
+              leading: IconButton(
+                icon: Icon(Icons.arrow_back),
+                onPressed: () => Navigator.of(context).pop(),
+              ),
+              title: Text(AppLocalizations.of(context)!.downloadMapsTitle),
             ),
-            title: Text(AppLocalizations.of(context)!.downloadMapsTitle),
+            body: Padding(
+              padding: EdgeInsets.symmetric(vertical: 3.0.h),
+              child: _buildRegionsList(context),
+            ),
           ),
-          body: _buildRegionsList(context),
         ),
       );
 
@@ -90,8 +96,10 @@ class _MapRegionsListScreenState extends State<MapRegionsListScreen> {
       listen: false,
     );
 
-    InstalledRegion? installedRegion =
-        controller.getInstalledRegions().where((element) => element.regionId == region.regionId).firstOrNull;
+    InstalledRegion? installedRegion = controller
+        .getInstalledRegions()
+        .where((element) => element.regionId == region.regionId)
+        .firstOrNull;
     bool hasChildren = region.childRegions != null;
     int? progress = controller.getDownloadProgress(region.regionId);
 
@@ -112,8 +120,11 @@ class _MapRegionsListScreenState extends State<MapRegionsListScreen> {
   }
 
   void _openChildRegions(Region region) {
-    List<Region> regions = [_ParentRegion.fromRegion(region), ...?region.childRegions];
-
+    List<Region> regions = [
+      _ParentRegion.fromRegion(region),
+      ...?region.childRegions
+    ];
+    regions.sort((a, b) => a.name.compareTo(b.name));
     Navigator.of(context).pushNamed(
       MapRegionsListScreen.navRoute,
       arguments: [regions],

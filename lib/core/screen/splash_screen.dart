@@ -35,8 +35,6 @@ class _SplashScreenState extends State<SplashScreen> {
 
   Future<void> doAutoLogin() async {
     try {
-      //   final loginVM = context.read<LoginViewModel>();
-
       var pref = await SecureSharedPref.getInstance();
 
       String? userDetails =

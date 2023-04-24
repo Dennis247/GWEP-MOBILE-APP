@@ -19,6 +19,8 @@
 
 import 'dart:math';
 
+import 'package:RefApp/common/geo_caculator.dart';
+import 'package:RefApp/core/model/route_instance.dart';
 import 'package:RefApp/core/utils/colors.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_gen/gen_l10n/app_localizations.dart';
@@ -64,13 +66,17 @@ class RoutingScreen extends StatefulWidget {
   /// Destination point.
   final WayPointInfo destination;
 
+  //existing coordinate
+  final GeoCoordinates? existingCurrentPosition;
+
   /// Creates a widget.
-  RoutingScreen({
-    Key? key,
-    required this.currentPosition,
-    required this.departure,
-    required this.destination,
-  }) : super(key: key);
+  RoutingScreen(
+      {Key? key,
+      required this.currentPosition,
+      required this.departure,
+      required this.destination,
+      this.existingCurrentPosition})
+      : super(key: key);
 
   @override
   _RoutingScreenState createState() => _RoutingScreenState();
@@ -120,7 +126,7 @@ class _RoutingScreenState extends State<RoutingScreen>
     );
 
     _transportModes = appPreferences.useAppOffline
-        ? [TransportModes.car, TransportModes.truck]
+        ? [TransportModes.car, TransportModes.walk]
         : TransportModes.values;
     _transportModesTabController = TabController(
       length: _transportModes.length,
@@ -139,7 +145,7 @@ class _RoutingScreenState extends State<RoutingScreen>
         widget.departure,
         widget.destination,
       ],
-      currentLocation: widget.currentPosition,
+      currentLocation: widget.existingCurrentPosition ?? widget.currentPosition,
     );
     _wayPointsController.addListener(() => _beginRouting());
   }
@@ -205,7 +211,7 @@ class _RoutingScreenState extends State<RoutingScreen>
 
       hereMapController.setWatermarkPlacement(WatermarkPlacement.bottomLeft, 0);
       hereMapController.camera.lookAtPointWithGeoOrientationAndMeasure(
-        widget.currentPosition,
+        widget.existingCurrentPosition ?? widget.currentPosition,
         GeoOrientationUpdate(double.nan, double.nan),
         MapMeasure(MapMeasureKind.distance, Positioning.initDistanceToEarth),
       );
@@ -348,6 +354,7 @@ class _RoutingScreenState extends State<RoutingScreen>
     _dismissWayPointPopup();
     GeoCoordinates? coordinates =
         _hereMapController.viewToGeoCoordinates(point);
+    _tappedCordinate = coordinates;
 
     if (coordinates == null) {
       return;
@@ -357,6 +364,7 @@ class _RoutingScreenState extends State<RoutingScreen>
       PlaceActionsPopup(
         coordinates: coordinates,
         hereMapController: _hereMapController,
+        showRouteIcon: true,
         onRightButtonPressed: (place) {
           _dismissWayPointPopup();
           _wayPointsController.add(place != null
@@ -426,9 +434,10 @@ class _RoutingScreenState extends State<RoutingScreen>
         0,
         GeoCoordinates(
             widget.currentPosition.latitude, widget.currentPosition.longitude));
-    route.geometry.vertices.add(new GeoCoordinates(
-        widget.destination.coordinates.latitude,
-        widget.destination.coordinates.longitude));
+
+    route.geometry.vertices.add(_tappedCordinate ??
+        new GeoCoordinates(widget.destination.coordinates.latitude,
+            widget.destination.coordinates.longitude));
 
     //todo set start and end of route
 
@@ -636,17 +645,33 @@ class _RoutingScreenState extends State<RoutingScreen>
     }
   }
 
+  GeoCoordinates? _tappedCordinate;
   _onRoutingEnd(Routing.RoutingError? error, List<Routing.Route>? routes) {
     if (routes == null || routes.isEmpty) {
-      if (error != null) {
-        setState(() => _routingInProgress = false);
-        Util.displayErrorSnackBar(
-          _scaffoldKey.currentContext!,
-          Util.formatString(AppLocalizations.of(context)!.routingErrorText,
-              [error.toString()]),
-        );
-      }
-      return;
+      //todo cacuate distabce between short point
+      var startCordinate = GeoCoordinates(
+          widget.currentPosition.latitude, widget.currentPosition.longitude);
+      var endCordinate = _tappedCordinate ??
+          GeoCoordinates(widget.destination.coordinates.latitude,
+              widget.destination.coordinates.longitude);
+
+      var distance =
+          GeoCaculator.calculateDistance(startCordinate, endCordinate);
+      routes = [
+        RouteInstance(
+            start: startCordinate, end: endCordinate, distnaceKM: distance)
+      ];
+
+      // if (error != null) {
+      //   setState(() => _routingInProgress = false);
+      //   Util.displayErrorSnackBar(
+      //     _scaffoldKey.currentContext!,
+      //     Util.formatString(AppLocalizations.of(context)!.routingErrorText,
+      //         [error.toString()]),
+      //   );
+      // }
+      // return;
+
     }
 
     _routePoiHandler.clearPlaces();

@@ -19,6 +19,7 @@
 
 import 'dart:async';
 
+import 'package:RefApp/core/utils/colors.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_gen/gen_l10n/app_localizations.dart';
 import 'package:flutter_svg/flutter_svg.dart';
@@ -36,6 +37,8 @@ import 'search_engine_proxy.dart';
 import 'search_results_screen.dart';
 import '../common/ui_style.dart';
 import '../common/util.dart' as Util;
+
+Place? placeResult;
 
 class SearchResult {
   final Place? place; // if null the current location should be used
@@ -115,7 +118,9 @@ class _SearchPopupState extends State<_SearchPopup> {
   @override
   void initState() {
     super.initState();
-    _searchEngine = SearchEngineProxy(offline: Provider.of<AppPreferences>(context, listen: false).useAppOffline);
+    _searchEngine = SearchEngineProxy(
+        offline:
+            Provider.of<AppPreferences>(context, listen: false).useAppOffline);
     _lastPosition = widget.currentPosition;
   }
 
@@ -127,7 +132,7 @@ class _SearchPopupState extends State<_SearchPopup> {
 
   @override
   Widget build(BuildContext context) {
-    ColorScheme colorScheme = Theme.of(context).colorScheme;
+    // ColorScheme colorScheme = Theme.of(context).colorScheme;
 
     return Consumer<RecentSearchDataModel>(
       builder: (context, model, child) => WillPopScope(
@@ -144,11 +149,12 @@ class _SearchPopupState extends State<_SearchPopup> {
                   slivers: [
                     SliverAppBar(
                       shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(UIStyle.popupsBorderRadius),
+                        borderRadius:
+                            BorderRadius.circular(UIStyle.popupsBorderRadius),
                       ),
                       leading: Container(),
                       leadingWidth: 0,
-                      backgroundColor: colorScheme.background,
+                      backgroundColor: AppColors.primaryColor,
                       pinned: true,
                       primary: false,
                       titleSpacing: UIStyle.contentMarginMedium,
@@ -165,29 +171,34 @@ class _SearchPopupState extends State<_SearchPopup> {
                               dense: true,
                               leading: Icon(
                                 Icons.gps_fixed,
-                                color: colorScheme.primary,
+                                color: AppColors.primaryColor,
                                 size: UIStyle.mediumIconSize,
                               ),
                               title: Text(
                                 widget.currentLocationTitle!,
                                 style: TextStyle(
                                   fontSize: UIStyle.bigFontSize,
-                                  color: colorScheme.secondary,
+                                  color: AppColors.black,
                                 ),
                               ),
                               onTap: () {
                                 _stopCurrentSearch();
-                                Navigator.of(context).pop(SearchResult.currentLocation());
+                                Navigator.of(context)
+                                    .pop(SearchResult.currentLocation());
                               },
                             ),
                           _buildResultsHeader(context),
                         ],
                       ),
-                      toolbarHeight: widget.currentLocationTitle != null ? _kHeaderHeightExt : _kHeaderHeight,
+                      toolbarHeight: widget.currentLocationTitle != null
+                          ? _kHeaderHeightExt
+                          : _kHeaderHeight,
                     ),
                     if (_lastError != null) _buildErrorWidget(context),
                     if (_lastError == null)
-                      _suggestions != null ? _buildSuggestionsWidget(context) : _buildRecentSearchWidget(context),
+                      _suggestions != null
+                          ? _buildSuggestionsWidget(context)
+                          : _buildRecentSearchWidget(context),
                   ],
                 ),
                 if (_searchInProgress)
@@ -206,7 +217,7 @@ class _SearchPopupState extends State<_SearchPopup> {
   }
 
   Widget _buildSearchHeader(BuildContext context) {
-    Color foregroundColor = Theme.of(context).colorScheme.onSecondary;
+    //  Color foregroundColor = Theme.of(context).colorScheme.onSecondary;
 
     return Row(
       children: [
@@ -215,7 +226,7 @@ class _SearchPopupState extends State<_SearchPopup> {
             decoration: BoxDecoration(
               borderRadius: BorderRadius.circular(100),
               border: Border.all(
-                color: foregroundColor,
+                color: AppColors.white,
               ),
             ),
             child: Row(
@@ -226,13 +237,14 @@ class _SearchPopupState extends State<_SearchPopup> {
                 ),
                 Expanded(
                   child: TextField(
+                    style: TextStyle(color: AppColors.white),
                     decoration: InputDecoration(
-                      border: InputBorder.none,
-                      focusedBorder: InputBorder.none,
-                      errorBorder: InputBorder.none,
-                      disabledBorder: InputBorder.none,
-                      hintText: AppLocalizations.of(context)!.searchHint,
-                    ),
+                        border: InputBorder.none,
+                        focusedBorder: InputBorder.none,
+                        errorBorder: InputBorder.none,
+                        disabledBorder: InputBorder.none,
+                        hintText: AppLocalizations.of(context)!.searchHint,
+                        hintStyle: TextStyle(color: AppColors.white)),
                     controller: _dstTextEditCtrl,
                     textInputAction: TextInputAction.search,
                     onChanged: (value) => _suggestionsForText(value),
@@ -241,7 +253,7 @@ class _SearchPopupState extends State<_SearchPopup> {
                 ),
                 IconButton(
                   icon: Icon(Icons.clear),
-                  color: foregroundColor,
+                  color: AppColors.white,
                   onPressed: () => setState(() {
                     _lastError = null;
                     _suggestions = null;
@@ -258,7 +270,7 @@ class _SearchPopupState extends State<_SearchPopup> {
             AppLocalizations.of(context)!.cancelTitle,
             style: TextStyle(
               fontSize: UIStyle.bigFontSize,
-              color: Theme.of(context).colorScheme.secondary,
+              color: AppColors.white,
             ),
           ),
         ),
@@ -273,12 +285,13 @@ class _SearchPopupState extends State<_SearchPopup> {
           : AppLocalizations.of(context)!.recentlySearchTitle,
       style: TextStyle(
         fontSize: UIStyle.bigFontSize,
-        color: Theme.of(context).colorScheme.onSecondary,
+        color: AppColors.white,
       ),
     );
   }
 
-  List<TextSpan> _makeHighlightedText(String text, List<IndexRange>? highlights) {
+  List<TextSpan> _makeHighlightedText(
+      String text, List<IndexRange>? highlights) {
     List<TextSpan> result = [];
 
     if (highlights == null) {
@@ -308,8 +321,10 @@ class _SearchPopupState extends State<_SearchPopup> {
     return result;
   }
 
-  Widget _buildSearchTile(BuildContext context, String title, {Map<HighlightType, List<IndexRange>>? highlights}) {
-    List<TextSpan> textSpans = _makeHighlightedText(title, (highlights ?? const {})[HighlightType.title]);
+  Widget _buildSearchTile(BuildContext context, String title,
+      {Map<HighlightType, List<IndexRange>>? highlights}) {
+    List<TextSpan> textSpans = _makeHighlightedText(
+        title, (highlights ?? const {})[HighlightType.title]);
 
     return ListTile(
       leading: Icon(Icons.search),
@@ -335,11 +350,14 @@ class _SearchPopupState extends State<_SearchPopup> {
     );
   }
 
-  Widget _buildPlaceTile(BuildContext context, Place place, {Map<HighlightType, List<IndexRange>>? highlights}) {
-    ColorScheme colorScheme = Theme.of(context).colorScheme;
-    List<TextSpan> titleTextSpans = _makeHighlightedText(place.title, (highlights ?? const {})[HighlightType.title]);
-    List<TextSpan> addressTextSpans =
-        _makeHighlightedText(place.address.addressText, (highlights ?? const {})[HighlightType.addressLabel]);
+  Widget _buildPlaceTile(BuildContext context, Place place,
+      {Map<HighlightType, List<IndexRange>>? highlights}) {
+    //   ColorScheme colorScheme = Theme.of(context).colorScheme;
+    List<TextSpan> titleTextSpans = _makeHighlightedText(
+        place.title, (highlights ?? const {})[HighlightType.title]);
+    List<TextSpan> addressTextSpans = _makeHighlightedText(
+        place.address.addressText,
+        (highlights ?? const {})[HighlightType.addressLabel]);
 
     return ListTile(
       leading: Icon(Icons.location_on_rounded),
@@ -348,7 +366,7 @@ class _SearchPopupState extends State<_SearchPopup> {
           text: "",
           style: TextStyle(
             fontSize: UIStyle.hugeFontSize,
-            color: colorScheme.primary,
+            color: AppColors.primaryColor,
           ),
           children: titleTextSpans,
         ),
@@ -364,7 +382,7 @@ class _SearchPopupState extends State<_SearchPopup> {
           text: TextSpan(
             text: "",
             style: TextStyle(
-              color: colorScheme.onSecondary,
+              color: AppColors.primaryColor,
               fontSize: UIStyle.bigFontSize,
             ),
             children: addressTextSpans,
@@ -373,16 +391,19 @@ class _SearchPopupState extends State<_SearchPopup> {
         ),
       ),
       onTap: () {
-        FocusScope.of(context).unfocus();
-        RecentSearchDataModel model = Provider.of<RecentSearchDataModel>(context, listen: false);
+        // FocusScope.of(context).unfocus();
+        RecentSearchDataModel model =
+            Provider.of<RecentSearchDataModel>(context, listen: false);
         model.insertPlace(place);
-        _showSearchResults(context, null, [place]);
+        Navigator.of(context).pop(new SearchResult(place: place));
+        // _showSearchResults(context, null, [place]);
       },
     );
   }
 
   Widget _buildRecentSearchWidget(BuildContext context) {
-    RecentSearchDataModel model = Provider.of<RecentSearchDataModel>(context, listen: false);
+    RecentSearchDataModel model =
+        Provider.of<RecentSearchDataModel>(context, listen: false);
 
     return FutureBuilder<List<RecentSearchItem>>(
       future: model.getData(),
@@ -427,7 +448,8 @@ class _SearchPopupState extends State<_SearchPopup> {
           Widget suggestionsWidget;
           Suggestion suggestion = _suggestions![index ~/ 2];
           Place? place = suggestion.place;
-          Map<HighlightType, List<IndexRange>> highlights = suggestion.getHighlights();
+          Map<HighlightType, List<IndexRange>> highlights =
+              suggestion.getHighlights();
 
           if (place == null) {
             suggestionsWidget = _buildSearchTile(
@@ -490,7 +512,8 @@ class _SearchPopupState extends State<_SearchPopup> {
       return SliverFillRemaining(
         child: Center(
           child: Text(
-            Util.formatString(appLocalizations.searchErrorText, [_lastError.toString()]),
+            Util.formatString(
+                appLocalizations.searchErrorText, [_lastError.toString()]),
             style: TextStyle(
               fontSize: UIStyle.hugeFontSize,
               fontWeight: FontWeight.bold,
@@ -523,8 +546,10 @@ class _SearchPopupState extends State<_SearchPopup> {
       });
     } else {
       // start searching
-      final TextQuery query = TextQuery.withArea(text, TextQueryArea.withCenter(_lastPosition));
-      _searchTaskHandle = _searchEngine.suggest(query, _searchOptions, (error, suggestions) {
+      final TextQuery query =
+          TextQuery.withArea(text, TextQueryArea.withCenter(_lastPosition));
+      _searchTaskHandle =
+          _searchEngine.suggest(query, _searchOptions, (error, suggestions) {
         if (error != null) {
           print('Search failed. Error: ${error.toString()}');
         }
@@ -548,11 +573,14 @@ class _SearchPopupState extends State<_SearchPopup> {
       _searchInProgress = true;
     });
 
-    RecentSearchDataModel model = Provider.of<RecentSearchDataModel>(context, listen: false);
+    RecentSearchDataModel model =
+        Provider.of<RecentSearchDataModel>(context, listen: false);
     model.insertText(text);
 
-    final TextQuery query = TextQuery.withArea(text, TextQueryArea.withCenter(_lastPosition));
-    _searchTaskHandle = _searchEngine.searchByText(query, _searchOptions, (error, places) async {
+    final TextQuery query =
+        TextQuery.withArea(text, TextQueryArea.withCenter(_lastPosition));
+    _searchTaskHandle = _searchEngine.searchByText(query, _searchOptions,
+        (error, places) async {
       if (error != null) {
         print('Search failed. Error: ${error.toString()}');
       } else {
@@ -565,7 +593,9 @@ class _SearchPopupState extends State<_SearchPopup> {
     });
   }
 
-  Future _showSearchResults(BuildContext context, String? queryString, List<Place> places) async {
+  Future _showSearchResults(
+      BuildContext context, String? queryString, List<Place> places) async {
+    placeResult = places[0];
     final result = await Navigator.of(context).pushNamed(
       SearchResultsScreen.navRoute,
       arguments: [queryString ?? "", places, _lastPosition],

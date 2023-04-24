@@ -257,13 +257,27 @@ class _DownloadMapsScreenState extends State<DownloadMapsScreen> {
     MapLoaderController controller =
         Provider.of<MapLoaderController>(context, listen: false);
 
-    controller
-        .getDownloadableRegions()
-        .then((regions) => Navigator.of(context).pushNamed(
-              MapRegionsListScreen.navRoute,
-              arguments: [regions],
-            ))
-        .catchError((error) {
+    // controller
+    //     .getDownloadableRegions()
+    //     .then((regions) => Navigator.of(context).pushNamed(
+    //           MapRegionsListScreen.navRoute,
+    //           arguments: [regions],
+    //         ))
+    //     .catchError((error) {
+    //   Util.displayErrorSnackBar(
+    //     context,
+    //     Util.formatString(AppLocalizations.of(context)!.downloadMapsErrorText,
+    //         [error.toString()]),
+    //   );
+    // });
+
+    controller.getDownloadableRegions().then((regions) {
+      regions.sort((a, b) => a.name.compareTo(b.name));
+      Navigator.of(context).pushNamed(
+        MapRegionsListScreen.navRoute,
+        arguments: [regions],
+      );
+    }).catchError((error) {
       Util.displayErrorSnackBar(
         context,
         Util.formatString(AppLocalizations.of(context)!.downloadMapsErrorText,

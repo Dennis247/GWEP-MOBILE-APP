@@ -51,6 +51,9 @@ class PlaceActionsPopup extends StatefulWidget {
   /// Left button icon.
   final Widget? leftButtonIcon;
 
+  //only show route icon on rout details screen
+  final bool? showRouteIcon;
+
   /// Creates a widget.
   PlaceActionsPopup({
     Key? key,
@@ -63,6 +66,7 @@ class PlaceActionsPopup extends StatefulWidget {
     ),
     this.onLeftButtonPressed = null,
     this.leftButtonIcon = null,
+    this.showRouteIcon = false,
   })  : assert((onLeftButtonPressed == null) == (leftButtonIcon == null)),
         super(key: key);
 
@@ -125,14 +129,14 @@ class _PlaceActionsPopupState extends State<PlaceActionsPopup> {
             child: Row(
               mainAxisSize: MainAxisSize.min,
               children: [
-                if (widget.onLeftButtonPressed != null)
-                  IconButton(
-                    icon: widget.leftButtonIcon!,
-                    onPressed: () {
-                      widget.onLeftButtonPressed!(_place);
-                      _place = null;
-                    },
-                  ),
+                // if (widget.onLeftButtonPressed != null)
+                //   IconButton(
+                //     icon: widget.leftButtonIcon!,
+                //     onPressed: () {
+                //       widget.onLeftButtonPressed!(_place);
+                //       _place = null;
+                //     },
+                //   ),
                 Padding(
                   padding: EdgeInsets.all(UIStyle.contentMarginMedium),
                   child: ConstrainedBox(
@@ -147,13 +151,15 @@ class _PlaceActionsPopupState extends State<PlaceActionsPopup> {
                     ),
                   ),
                 ),
-                IconButton(
-                  icon: widget.rightButtonIcon,
-                  onPressed: () {
-                    widget.onRightButtonPressed(_place);
-                    _place = null;
-                  },
-                ),
+                widget.showRouteIcon!
+                    ? IconButton(
+                        icon: widget.rightButtonIcon,
+                        onPressed: () {
+                          widget.onRightButtonPressed(_place);
+                          _place = null;
+                        },
+                      )
+                    : SizedBox(),
               ],
             ),
           ),

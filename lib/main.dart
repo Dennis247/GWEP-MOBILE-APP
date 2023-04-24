@@ -136,11 +136,14 @@ class _MyAppState extends State<MyApp> {
               },
               RoutingScreen.navRoute: (BuildContext context) {
                 List<dynamic> arguments = settings.arguments as List<dynamic>;
-                assert(arguments.length == 3);
+                assert(arguments.length == 4);
                 return RoutingScreen(
                   currentPosition: arguments[0] as GeoCoordinates,
                   departure: arguments[1] as WayPointInfo,
                   destination: arguments[2] as WayPointInfo,
+                  existingCurrentPosition: arguments[3] == null
+                      ? arguments[0] as GeoCoordinates
+                      : arguments[3] as GeoCoordinates,
                 );
               },
               RouteDetailsScreen.navRoute: (BuildContext context) {

@@ -1,3 +1,5 @@
+import 'package:here_sdk/mapview.dart';
+
 import '../model/account_data.dart';
 
 class DataStore {
@@ -7,4 +9,6 @@ class DataStore {
 
   static List<String> hubAreas = [];
   static String selectedHub = "";
+
+  static MapScheme mapScheme = MapScheme.normalDay;
 }

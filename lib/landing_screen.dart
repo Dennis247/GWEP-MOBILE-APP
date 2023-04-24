@@ -19,6 +19,7 @@
 
 import 'dart:async';
 import 'dart:convert';
+import 'dart:developer';
 import 'dart:io';
 
 import 'package:RefApp/common/file_utility.dart';
@@ -89,7 +90,6 @@ class _LandingScreenState extends State<LandingScreen> with Positioning {
 
   bool _mapInitSuccess = false;
   late HereMapController _hereMapController;
-  late HereMapController _globalMapController;
   GlobalKey _hereMapKey = GlobalKey();
   OverlayEntry? _locationWarningOverlay;
   OverlayEntry? _loadCustomSceneResultOverlay;
@@ -114,14 +114,15 @@ class _LandingScreenState extends State<LandingScreen> with Positioning {
 
   @override
   Widget build(BuildContext context) {
-    return WillPopScope(
-      onWillPop: () async {
-        stopPositioning();
-        return true;
-      },
-      child: Consumer2<AppPreferences, CustomMapStyleSettings>(
-        builder: (context, preferences, customStyleSettings, child) => SafeArea(
-          child: Scaffold(
+    return SafeArea(
+      child: WillPopScope(
+        onWillPop: () async {
+          stopPositioning();
+          return true;
+        },
+        child: Consumer2<AppPreferences, CustomMapStyleSettings>(
+          builder: (context, preferences, customStyleSettings, child) =>
+              Scaffold(
             appBar: AppBar(
               title: Consumer<WaterPointViewModel>(
                 builder: (context, value, child) => Text(
@@ -132,6 +133,95 @@ class _LandingScreenState extends State<LandingScreen> with Positioning {
                       TextStyle(fontWeight: FontWeight.bold, fontSize: 2.0.h),
                 ),
               ),
+              actions: [
+                IconButton(
+                    onPressed: () async {
+                      var result = await showBlurBarrierBottomSheet(
+                        context: context,
+                        transparent: true,
+                        child: SizedBox(
+                          height: 60.0.h,
+                          child: Column(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              _buildCardWidget(
+                                  bgColor: AppColors.green,
+                                  onTap: () {
+                                    setMapSTyle(mapScheme: MapScheme.satellite);
+                                    Navigator.of(context).pop();
+                                  },
+                                  title: 'Satellite',
+                                  iconData: FontAwesomeIcons.satellite),
+                              SizedBox(
+                                height: 2.0.h,
+                              ),
+                              _buildCardWidget(
+                                  bgColor: Colors.deepOrange,
+                                  onTap: () {
+                                    setMapSTyle(mapScheme: MapScheme.normalDay);
+                                    Navigator.of(context).pop();
+                                  },
+                                  title: 'Normal Day',
+                                  iconData: FontAwesomeIcons.sun),
+                              SizedBox(
+                                height: 2.0.h,
+                              ),
+                              _buildCardWidget(
+                                  bgColor: Colors.orange,
+                                  onTap: () {
+                                    setMapSTyle(
+                                        mapScheme: MapScheme.normalNight);
+                                    Navigator.of(context).pop();
+                                  },
+                                  title: 'Normal Night',
+                                  iconData: FontAwesomeIcons.moon),
+                              SizedBox(
+                                height: 2.0.h,
+                              ),
+                              _buildCardWidget(
+                                  bgColor: Colors.deepPurple,
+                                  onTap: () {
+                                    setMapSTyle(mapScheme: MapScheme.hybridDay);
+                                    Navigator.of(context).pop();
+                                  },
+                                  title: 'Hybrid Day',
+                                  iconData: FontAwesomeIcons.mapLocation),
+                              SizedBox(
+                                height: 2.0.h,
+                              ),
+                              _buildCardWidget(
+                                  bgColor: Colors.deepOrangeAccent,
+                                  onTap: () {
+                                    setMapSTyle(
+                                        mapScheme: MapScheme.hybridNight);
+                                    Navigator.of(context).pop();
+                                  },
+                                  title: 'Hybrid Night',
+                                  iconData: FontAwesomeIcons.mapLocationDot),
+                            ],
+                          ),
+                        ),
+                        isDismissible: true,
+                      );
+
+                      if (result != null) {
+                        //  value.setSelectedHubArea(result.toString());
+                        _getWaterPointData();
+                      }
+                    },
+                    icon: Icon(
+                      FontAwesomeIcons.layerGroup,
+                      size: 2.0.h,
+                    )),
+                IconButton(
+                    onPressed: () {
+                      _onSearch(context);
+                    },
+                    icon: Icon(
+                      FontAwesomeIcons.magnifyingGlass,
+                      size: 2.0.h,
+                    ))
+              ],
             ),
             backgroundColor: Colors.white,
             resizeToAvoidBottomInset: false,
@@ -144,7 +234,27 @@ class _LandingScreenState extends State<LandingScreen> with Positioning {
                   builder: (context, value, child) =>
                       value.isLoadingWaterPointData
                           ? LoadingIndicator2()
-                          : SizedBox())
+                          : SizedBox()),
+              Positioned(
+                child: FloatingActionButton(
+                    child: Icon(Icons.gps_fixed),
+                    mini: true,
+                    onPressed: () {
+                      GeoCoordinates coordinates = lastKnownLocation != null
+                          ? lastKnownLocation!.coordinates
+                          : Positioning.initPosition;
+                      _hereMapController.camera
+                          .lookAtPointWithGeoOrientationAndMeasure(
+                        coordinates,
+                        GeoOrientationUpdate(double.nan, double.nan),
+                        MapMeasure(MapMeasureKind.distance,
+                            Positioning.initDistanceToEarth),
+                      );
+                    },
+                    backgroundColor: AppColors.green),
+                left: 3.8.w,
+                bottom: 2.5.h,
+              )
             ]),
             floatingActionButton: _mapInitSuccess ? _buildFAB2() : null,
             drawer: buildAppDrawer(preferences),
@@ -156,11 +266,16 @@ class _LandingScreenState extends State<LandingScreen> with Positioning {
     );
   }
 
+  void setMapSTyle({required MapScheme mapScheme}) {
+    DataStore.mapScheme = mapScheme;
+    _hereMapController.mapScene
+        .loadSceneForMapScheme(mapScheme, (MapError? error) {});
+  }
+
   void _onMapCreated(HereMapController hereMapController) {
     _hereMapController = hereMapController;
-    _globalMapController = hereMapController;
 
-    hereMapController.mapScene.loadSceneForMapScheme(MapScheme.normalDay,
+    hereMapController.mapScene.loadSceneForMapScheme(DataStore.mapScheme,
         (MapError? error) {
       if (error != null) {
         print('Map scene not loaded. MapError: ${error.toString()}');
@@ -172,7 +287,7 @@ class _LandingScreenState extends State<LandingScreen> with Positioning {
         MapMeasure(MapMeasureKind.distance, Positioning.initDistanceToEarth),
       );
 
-      // _addGestureListeners();
+      _addGestureListeners();
 
       PositioningEngine positioningEngine =
           Provider.of<PositioningEngine>(context, listen: false);
@@ -1110,6 +1225,7 @@ class _LandingScreenState extends State<LandingScreen> with Positioning {
     );
   }
 
+  GeoCoordinates? existingCordinates;
   void _addGestureListeners() {
     _hereMapController.gestures.panListener =
         PanListener((state, origin, translation, velocity) {
@@ -1119,16 +1235,28 @@ class _LandingScreenState extends State<LandingScreen> with Positioning {
     });
 
     _hereMapController.gestures.tapListener = TapListener((point) {
-      if (_hereMapController.widgetPins.isEmpty) {
-        _removeRouteFromMarker();
+      //check for existing cordinates and remove it
+      if (existingCordinates != null) {
+        _dismissOldCordinate(existingCordinates!);
+        existingCordinates = null;
       }
-      _dismissWayPointPopup();
     });
 
     _hereMapController.gestures.longPressListener =
         LongPressListener((state, point) {
       if (state == GestureState.begin) {
-        _showWayPointPopup(point);
+        if (existingCordinates == null) {
+          //do not remove old cordinate from map only add codinate
+          existingCordinates = _hereMapController.viewToGeoCoordinates(point);
+          _showWayPointPopup(point);
+        } else {
+          //todo remove old cordinate first from map
+          GeoCoordinates? coordinates =
+              _hereMapController.viewToGeoCoordinates(point);
+          _dismissOldCordinate(existingCordinates!);
+          _showWayPointPopup(point);
+          existingCordinates = coordinates;
+        }
       }
     });
   }
@@ -1139,52 +1267,21 @@ class _LandingScreenState extends State<LandingScreen> with Positioning {
     }
   }
 
+  void _dismissOldCordinate(GeoCoordinates coordinates) {
+    try {
+      _hereMapController.widgetPins
+          .firstWhere((element) => element.coordinates == coordinates)
+          .unpin();
+    } catch (e) {
+      log(e.toString());
+    }
+  }
+
   void _showWayPointPopup(Point2D point) {
-    _dismissWayPointPopup();
+    //   _dismissWayPointPopup();
     GeoCoordinates coordinates =
         _hereMapController.viewToGeoCoordinates(point) ??
             _hereMapController.camera.state.targetCoordinates;
-
-    _hereMapController.pinWidget(
-      PlaceActionsPopup(
-        coordinates: coordinates,
-        hereMapController: _hereMapController,
-        onLeftButtonPressed: (place) {
-          _dismissWayPointPopup();
-          _routeFromPlace = place;
-          _addRouteFromPoint(coordinates);
-        },
-        leftButtonIcon: SvgPicture.asset(
-          "assets/depart_marker.svg",
-          width: UIStyle.bigIconSize,
-          height: UIStyle.bigIconSize,
-        ),
-        onRightButtonPressed: (place) {
-          _dismissWayPointPopup();
-          _showRoutingScreen(place != null
-              ? WayPointInfo.withPlace(
-                  place: place,
-                  originalCoordinates: coordinates,
-                )
-              : WayPointInfo.withCoordinates(
-                  coordinates: coordinates,
-                ));
-        },
-        rightButtonIcon: SvgPicture.asset(
-          "assets/route.svg",
-          color: UIStyle.addWayPointPopupForegroundColor,
-          width: UIStyle.bigIconSize,
-          height: UIStyle.bigIconSize,
-        ),
-      ),
-      coordinates,
-      anchor: Anchor2D.withHorizontalAndVertical(0.5, 1),
-    );
-  }
-
-  void _showWayPointPopup2() {
-    GeoCoordinates coordinates =
-        _hereMapController.camera.state.targetCoordinates;
 
     _hereMapController.pinWidget(
       PlaceActionsPopup(
@@ -1253,19 +1350,6 @@ class _LandingScreenState extends State<LandingScreen> with Positioning {
     }
   }
 
-  void _resetCurrentPosition() {
-    GeoCoordinates coordinates = lastKnownLocation != null
-        ? lastKnownLocation!.coordinates
-        : Positioning.initPosition;
-    _hereMapController.camera.lookAtPointWithGeoOrientationAndMeasure(
-      coordinates,
-      GeoOrientationUpdate(double.nan, double.nan),
-      MapMeasure(MapMeasureKind.distance, Positioning.initDistanceToEarth),
-    );
-
-    setState(() => enableMapUpdate = true);
-  }
-
   void _dismissLocationWarningPopup() {
     _locationWarningOverlay?.remove();
     _locationWarningOverlay = null;
@@ -1324,16 +1408,61 @@ class _LandingScreenState extends State<LandingScreen> with Positioning {
     if (result != null) {
       SearchResult searchResult = result;
       assert(searchResult.place != null);
-      _showRoutingScreen(WayPointInfo.withPlace(
-        place: searchResult.place,
-      ));
+      // _showRoutingScreen(WayPointInfo.withPlace(
+      //   place: searchResult.place,
+      // ));
+      if (existingCordinates != null) {
+        _dismissOldCordinate(existingCordinates!);
+      }
+      existingCordinates = result.place!.geoCoordinates;
+      _showWayPointCordinate(existingCordinates!);
+
+      //move camera to cordinate position
+      _hereMapController.camera.lookAtPointWithMeasure(
+        existingCordinates!,
+        MapMeasure(MapMeasureKind.distance, Positioning.initDistanceToEarth),
+      );
     }
   }
 
+  void _showWayPointCordinate(GeoCoordinates coordinates) {
+    _hereMapController.pinWidget(
+      PlaceActionsPopup(
+        coordinates: coordinates,
+        hereMapController: _hereMapController,
+        onLeftButtonPressed: (place) {
+          _dismissWayPointPopup();
+          _routeFromPlace = place;
+          _addRouteFromPoint(coordinates);
+        },
+        leftButtonIcon: SvgPicture.asset(
+          "assets/depart_marker.svg",
+          width: UIStyle.bigIconSize,
+          height: UIStyle.bigIconSize,
+        ),
+        onRightButtonPressed: (place) {},
+        rightButtonIcon: SvgPicture.asset(
+          "assets/route.svg",
+          color: UIStyle.addWayPointPopupForegroundColor,
+          width: UIStyle.bigIconSize,
+          height: UIStyle.bigIconSize,
+        ),
+      ),
+      coordinates,
+      anchor: Anchor2D.withHorizontalAndVertical(0.5, 1),
+    );
+  }
+
   void _showRoutingScreen(WayPointInfo destination) async {
+    //do a check if existing coridnate is null, if it is not null use that as current location
+
     GeoCoordinates currentPosition = lastKnownLocation != null
         ? lastKnownLocation!.coordinates
         : Positioning.initPosition;
+
+    if (existingCordinates != null) {
+      currentPosition = existingCordinates!;
+    }
 
 //Todo remove current position
     ///  currentPosition = GeoCoordinates(7.629322846, 34.37388925);
@@ -1353,6 +1482,7 @@ class _LandingScreenState extends State<LandingScreen> with Positioning {
                   )
             : WayPointInfo(coordinates: currentPosition),
         destination,
+        existingCordinates
       ],
     );
 

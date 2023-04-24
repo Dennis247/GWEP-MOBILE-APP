@@ -49,7 +49,7 @@ mixin Positioning {
   bool _locationMarkerVisible = false;
   Location? _lastKnownLocation;
 
-  bool enableMapUpdate = false;
+  bool enableMapUpdate = true;
 
   /// Gets last known location.
   Location? get lastKnownLocation =>
@@ -89,7 +89,8 @@ mixin Positioning {
     _positioningEngine = Provider.of<PositioningEngine>(context, listen: false);
     _initMapLocation();
 
-    // _locationUpdatesSubscription = _positioningEngine!.getLocationUpdates.listen(_onLocationUpdated);
+    _locationUpdatesSubscription =
+        _positioningEngine!.getLocationUpdates.listen(_onLocationUpdated);
   }
 
   /// Stops positioning.
@@ -178,7 +179,7 @@ mixin Positioning {
 
     // Update the map viewport to be centered on the location.
     if (enableMapUpdate) {
-      _hereMapController.camera.lookAtPoint(location.coordinates);
+      //_hereMapController.camera.lookAtPoint(location.coordinates);
     }
 
     _onLocationUpdatedCallback?.call(location);

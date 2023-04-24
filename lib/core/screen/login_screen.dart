@@ -39,11 +39,30 @@ class _LoginScreenState extends State<LoginScreen> {
   final _formKey = GlobalKey<FormState>();
 
   void _loginUser() async {
-    String phone = _phoneNumberController.text.trim();
+    //todo local login
+    var pref = await SecureSharedPref.getInstance();
+    String? userDetails =
+        await pref.getString(Constants.userDetails, isEncrypted: true);
 
+    String phone = _phoneNumberController.text.trim();
+    if (userDetails != null) {
+      var userData = jsonDecode(userDetails);
+      DataStore.userAccount = Account.fromJson(userData);
+      if (DataStore.userAccount?.phoneNumber!.trim() == phone) {
+        AppNavigator.pushAndRemoveUntil(context, LandingScreen());
+      } else {
+        await _onlineLogin();
+      }
+    } else {
+      await _onlineLogin();
+    }
+  }
+
+  _onlineLogin() async {
     if (_formKey.currentState!.validate()) {
       final loginVM = context.read<LoginViewModel>();
-      var response = await loginVM.loginUser(phoneNumber: phone);
+      var response = await loginVM.loginUser(
+          phoneNumber: _phoneNumberController.text.trim());
       if (!mounted) return;
       if (response.succeeded) {
         //store data in shared prerefence

@@ -17,6 +17,7 @@
  * License-Filename: LICENSE
  */
 
+import 'package:RefApp/core/utils/colors.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:here_sdk/core.dart';
@@ -58,7 +59,8 @@ class SearchResultsScreen extends StatefulWidget {
   _SearchResultsScreenState createState() => _SearchResultsScreenState();
 }
 
-class _SearchResultsScreenState extends State<SearchResultsScreen> with TickerProviderStateMixin, Positioning {
+class _SearchResultsScreenState extends State<SearchResultsScreen>
+    with TickerProviderStateMixin, Positioning {
   static const double _kZoomDistanceToEarth = 1000; // meters
   static const double _kTapRadius = 3; // pixels
   static const double _kPlaceCardHeight = 80;
@@ -96,7 +98,8 @@ class _SearchResultsScreenState extends State<SearchResultsScreen> with TickerPr
         length: widget.places.length,
         child: WillPopScope(
           onWillPop: () async {
-            Navigator.of(context).pop(_hereMapController.camera.state.targetCoordinates);
+            Navigator.of(context)
+                .pop(_hereMapController.camera.state.targetCoordinates);
             return false;
           },
           child: Scaffold(
@@ -119,7 +122,8 @@ class _SearchResultsScreenState extends State<SearchResultsScreen> with TickerPr
   void _onMapCreated(HereMapController hereMapController) {
     _hereMapController = hereMapController;
 
-    CustomMapStyleSettings customMapStyleSettings = Provider.of<CustomMapStyleSettings>(context, listen: false);
+    CustomMapStyleSettings customMapStyleSettings =
+        Provider.of<CustomMapStyleSettings>(context, listen: false);
 
     MapSceneLoadSceneCallback mapSceneLoadSceneCallback = (MapError? error) {
       if (error != null) {
@@ -143,11 +147,13 @@ class _SearchResultsScreenState extends State<SearchResultsScreen> with TickerPr
       );
     };
 
-    Util.loadMapScene(customMapStyleSettings, hereMapController, mapSceneLoadSceneCallback);
+    Util.loadMapScene(
+        customMapStyleSettings, hereMapController, mapSceneLoadSceneCallback);
   }
 
   void _addPanListener() {
-    _hereMapController.gestures.panListener = PanListener((state, origin, translation, velocity) {
+    _hereMapController.gestures.panListener =
+        PanListener((state, origin, translation, velocity) {
       if (enableMapUpdate) {
         setState(() => enableMapUpdate = false);
       }
@@ -155,7 +161,9 @@ class _SearchResultsScreenState extends State<SearchResultsScreen> with TickerPr
   }
 
   void _resetCurrentPosition() {
-    GeoCoordinates coordinates = lastKnownLocation != null ? lastKnownLocation!.coordinates : widget.currentPosition;
+    GeoCoordinates coordinates = lastKnownLocation != null
+        ? lastKnownLocation!.coordinates
+        : widget.currentPosition;
 
     _hereMapController.camera.lookAtPointWithGeoOrientationAndMeasure(
       coordinates,
@@ -166,11 +174,13 @@ class _SearchResultsScreenState extends State<SearchResultsScreen> with TickerPr
   }
 
   void _setTapGestureHandler() {
-    _hereMapController.gestures.tapListener = TapListener((Point2D touchPoint) => _pickMapMarker(touchPoint));
+    _hereMapController.gestures.tapListener =
+        TapListener((Point2D touchPoint) => _pickMapMarker(touchPoint));
   }
 
   void _pickMapMarker(Point2D touchPoint) {
-    _hereMapController.pickMapItems(touchPoint, _kTapRadius, (pickMapItemsResult) {
+    _hereMapController.pickMapItems(touchPoint, _kTapRadius,
+        (pickMapItemsResult) {
       List<MapMarker>? mapMarkerList = pickMapItemsResult?.markers;
       if (mapMarkerList == null || mapMarkerList.length == 0) {
         print("No map markers found.");
@@ -209,10 +219,12 @@ class _SearchResultsScreenState extends State<SearchResultsScreen> with TickerPr
   void _createResultsMarkers() {
     assert(widget.places.isNotEmpty);
 
-    int markerSize = (_hereMapController.pixelScale * UIStyle.searchMarkerSize).truncate();
-    _smallMarkerImage = MapImage.withFilePathAndWidthAndHeight("assets/map_marker.svg", markerSize, markerSize);
-    _bigMarkerImage =
-        MapImage.withFilePathAndWidthAndHeight("assets/map_marker_big.svg", markerSize * 2, markerSize * 2);
+    int markerSize =
+        (_hereMapController.pixelScale * UIStyle.searchMarkerSize).truncate();
+    _smallMarkerImage = MapImage.withFilePathAndWidthAndHeight(
+        "assets/map_marker.svg", markerSize, markerSize);
+    _bigMarkerImage = MapImage.withFilePathAndWidthAndHeight(
+        "assets/map_marker_big.svg", markerSize * 2, markerSize * 2);
     _markers = <MapMarker>[];
 
     for (int i = 0; i < widget.places.length; ++i) {
@@ -234,16 +246,18 @@ class _SearchResultsScreenState extends State<SearchResultsScreen> with TickerPr
         MapMeasure(MapMeasureKind.distance, Positioning.initDistanceToEarth),
       );
     } else {
-      GeoBox? geoBox = GeoBox.containingGeoCoordinates(widget.places.map((e) => e.geoCoordinates!).toList());
+      GeoBox? geoBox = GeoBox.containingGeoCoordinates(
+          widget.places.map((e) => e.geoCoordinates!).toList());
 
       if (geoBox != null && _bottomBarKey.currentContext != null) {
-        final RenderBox bottomBarBox = _bottomBarKey.currentContext!.findRenderObject() as RenderBox;
+        final RenderBox bottomBarBox =
+            _bottomBarKey.currentContext!.findRenderObject() as RenderBox;
         final double topOffset = MediaQuery.of(context).padding.top;
 
         _hereMapController.zoomGeoBoxToLogicalViewPort(
             geoBox: geoBox,
-            viewPort: Rect.fromLTRB(
-                0, topOffset, bottomBarBox.size.width, MediaQuery.of(context).size.height - bottomBarBox.size.height));
+            viewPort: Rect.fromLTRB(0, topOffset, bottomBarBox.size.width,
+                MediaQuery.of(context).size.height - bottomBarBox.size.height));
       }
     }
   }
@@ -274,7 +288,8 @@ class _SearchResultsScreenState extends State<SearchResultsScreen> with TickerPr
       children: [
         IconButton(
           icon: Icon(Icons.arrow_back),
-          onPressed: () => Navigator.of(context).pop(_hereMapController.camera.state.targetCoordinates),
+          onPressed: () => Navigator.of(context)
+              .pop(_hereMapController.camera.state.targetCoordinates),
         ),
         Expanded(
           child: Text(
@@ -290,7 +305,9 @@ class _SearchResultsScreenState extends State<SearchResultsScreen> with TickerPr
             icon: Icon(
               expanded ? Icons.expand_more : Icons.expand_less,
             ),
-            onPressed: expanded ? () => Navigator.of(context).pop() : () => _showResultsList(context),
+            onPressed: expanded
+                ? () => Navigator.of(context).pop()
+                : () => _showResultsList(context),
           ),
       ],
     );
@@ -311,19 +328,22 @@ class _SearchResultsScreenState extends State<SearchResultsScreen> with TickerPr
   }
 
   Widget _buildPlaceTile(BuildContext context, Place place, int? index) {
-    ColorScheme colorScheme = Theme.of(context).colorScheme;
+    // ColorScheme colorScheme = Theme.of(context).colorScheme;
 
     return Container(
       margin: EdgeInsets.only(left: UIStyle.contentMarginExtraSmall),
       decoration: BoxDecoration(
         border: Border(
           left: BorderSide(
-              color: _selectedIndex == index ? colorScheme.secondary : Colors.transparent,
+              color: _selectedIndex == index
+                  ? AppColors.primaryColor
+                  : Colors.transparent,
               width: UIStyle.contentMarginExtraSmall),
         ),
       ),
       child: ListTile(
-        tileColor: _selectedIndex == index ? UIStyle.selectedListTileColor : null,
+        tileColor:
+            _selectedIndex == index ? UIStyle.selectedListTileColor : null,
         title: Text(
           place.title,
           style: TextStyle(fontSize: UIStyle.hugeFontSize),
@@ -339,7 +359,7 @@ class _SearchResultsScreenState extends State<SearchResultsScreen> with TickerPr
             text: TextSpan(
                 text: Util.makeDistanceString(context, place.distanceInMeters),
                 style: TextStyle(
-                  color: colorScheme.onSecondary,
+                  color: AppColors.primaryColor,
                   fontWeight: FontWeight.bold,
                   fontSize: UIStyle.bigFontSize,
                 ),
@@ -360,7 +380,7 @@ class _SearchResultsScreenState extends State<SearchResultsScreen> with TickerPr
             child: Ink(
               width: UIStyle.smallButtonHeight,
               height: UIStyle.smallButtonHeight,
-              color: colorScheme.background,
+              color: AppColors.primaryColor,
               child: InkWell(
                 child: Center(
                   child: SvgPicture.asset(
@@ -433,7 +453,8 @@ class _SearchResultsScreenState extends State<SearchResultsScreen> with TickerPr
                   (context, index) {
                     final int itemIndex = index ~/ 2;
                     return index.isEven
-                        ? _buildPlaceTile(context, widget.places[itemIndex], itemIndex)
+                        ? _buildPlaceTile(
+                            context, widget.places[itemIndex], itemIndex)
                         : Divider(
                             height: 1,
                           );
