@@ -17,6 +17,7 @@
  * License-Filename: LICENSE
  */
 
+import 'dart:developer';
 import 'dart:io';
 
 import 'package:RefApp/core/utils/navigator.dart';
@@ -320,10 +321,16 @@ class _NavigationScreenState extends State<NavigationScreen>
           ..notificationInterval =
               Duration(milliseconds: _kNotificationIntervalInMilliseconds);
 
-    _locationSimulator =
-        Navigation.LocationSimulator.withRoute(widget.route, options);
-    _locationSimulator!.listener = _visualNavigator;
-    _locationSimulator!.start();
+    try {
+      _locationSimulator =
+          Navigation.LocationSimulator.withRoute(widget.route, options);
+      _locationSimulator!.listener = _visualNavigator;
+      _locationSimulator!.start();
+    } catch (e) {
+      _locationSimulator!.listener = _visualNavigator;
+      _locationSimulator!.start();
+      log(e.toString());
+    }
 
     // Start location engine to allow background mode under iOS
     if (Platform.isIOS) {
@@ -332,14 +339,19 @@ class _NavigationScreenState extends State<NavigationScreen>
   }
 
   void _startRealLocations({bool addListener = true}) {
-    _locationEngine = LocationEngine();
-    _locationEngine!.setBackgroundLocationAllowed(true);
-    _locationEngine!.setBackgroundLocationIndicatorVisible(true);
-    _locationEngine!.setPauseLocationUpdatesAutomatically(true);
-    if (addListener) {
-      _locationEngine!.addLocationListener(_visualNavigator);
+    try {
+      _locationEngine = LocationEngine();
+      _locationEngine!.setBackgroundLocationAllowed(true);
+      _locationEngine!.setBackgroundLocationIndicatorVisible(true);
+      _locationEngine!.setPauseLocationUpdatesAutomatically(true);
+      if (addListener) {
+        _locationEngine!.addLocationListener(_visualNavigator);
+      }
+      _locationEngine!
+          .startWithLocationAccuracy(LocationAccuracy.bestAvailable);
+    } catch (e) {
+      log(e.toString());
     }
-    _locationEngine!.startWithLocationAccuracy(LocationAccuracy.bestAvailable);
   }
 
   void _startNavigation() {
@@ -351,7 +363,12 @@ class _NavigationScreenState extends State<NavigationScreen>
     _setupListeners();
     _setupVoiceTextMessages();
 
-    _visualNavigator.route = _currentRoute;
+    try {
+      _visualNavigator.route = _currentRoute;
+    } catch (e) {
+      //_visualNavigator.route = [];
+      log(e.toString());
+    }
 
     setState(() {
       _navigationStarted = true;
@@ -439,10 +456,10 @@ class _NavigationScreenState extends State<NavigationScreen>
 
     _visualNavigator.destinationReachedListener =
         Navigation.DestinationReachedListener(() {
-      _stopNavigation();
+      //  _stopNavigation();
       // Navigator.of(context)
       //     .popUntil((route) => route.settings.name == LandingScreen.navRoute);
-      AppNavigator.pushAndRemoveUntil(context, LandingScreen());
+      // AppNavigator.pushAndRemoveUntil(context, LandingScreen());
     });
 
     _visualNavigator.routeDeviationListener = _reroutingHandler;

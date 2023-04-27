@@ -25,6 +25,7 @@ import 'package:RefApp/core/utils/colors.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_gen/gen_l10n/app_localizations.dart';
 import 'package:flutter_svg/flutter_svg.dart';
+import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:here_sdk/core.dart';
 import 'package:here_sdk/gestures.dart';
 import 'package:here_sdk/mapview.dart';
@@ -110,6 +111,8 @@ class _RoutingScreenState extends State<RoutingScreen>
   late List<TransportModes> _transportModes;
   late WayPointsController _wayPointsController;
 
+  bool _useStraightline = false;
+
   @override
   void initState() {
     super.initState();
@@ -174,6 +177,8 @@ class _RoutingScreenState extends State<RoutingScreen>
                 // if (!Provider.of<AppPreferences>(context, listen: false)
                 //     .useAppOffline)
                 //   _buildTrafficButton(context),
+                //Todo -- add option to draw straight line route on map
+                _buildStraightLineWidget(context)
               ],
             ),
             extendBodyBehindAppBar: true,
@@ -439,8 +444,6 @@ class _RoutingScreenState extends State<RoutingScreen>
         new GeoCoordinates(widget.destination.coordinates.latitude,
             widget.destination.coordinates.longitude));
 
-    //todo set start and end of route
-
     MapPolyline routeMapPolyline = MapPolyline(
       route.geometry,
       UIStyle.routeLineWidth,
@@ -504,6 +507,35 @@ class _RoutingScreenState extends State<RoutingScreen>
                 Util.setTrafficLayersVisibilityOnMap(
                     context, _hereMapController);
               }),
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildStraightLineWidget(BuildContext context) {
+    return Align(
+      alignment: Alignment.topRight,
+      child: SafeArea(
+        child: Padding(
+          padding: EdgeInsets.all(UIStyle.contentMarginLarge),
+          child: Material(
+            color: AppColors.primaryColor,
+            borderRadius: BorderRadius.circular(UIStyle.popupsBorderRadius),
+            elevation: 2,
+            child: InkWell(
+              child: Padding(
+                  padding: EdgeInsets.all(UIStyle.contentMarginMedium),
+                  child: Icon(
+                    FontAwesomeIcons.route,
+                    color: AppColors.white,
+                  )),
+              onTap: () {
+                _useStraightline = true;
+                _beginRouting();
+                //todo draw route as straight line from source to origin
+              },
             ),
           ),
         ),
@@ -604,10 +636,12 @@ class _RoutingScreenState extends State<RoutingScreen>
                                     _wayPointsController
                                   ],
                                 ),
-                        onNavigation: () => Navigator.of(context).pushNamed(
-                          NavigationScreen.navRoute,
-                          arguments: [route, _wayPointsController.value],
-                        ),
+                        onNavigation: () {
+                          Navigator.of(context).pushNamed(
+                            NavigationScreen.navRoute,
+                            arguments: [route, _wayPointsController.value],
+                          );
+                        },
                       ),
                     ),
                   )
@@ -647,7 +681,7 @@ class _RoutingScreenState extends State<RoutingScreen>
 
   GeoCoordinates? _tappedCordinate;
   _onRoutingEnd(Routing.RoutingError? error, List<Routing.Route>? routes) {
-    if (routes == null || routes.isEmpty) {
+    if (routes == null || routes.isEmpty || _useStraightline) {
       //todo cacuate distabce between short point
       var startCordinate = GeoCoordinates(
           widget.currentPosition.latitude, widget.currentPosition.longitude);
@@ -661,17 +695,7 @@ class _RoutingScreenState extends State<RoutingScreen>
         RouteInstance(
             start: startCordinate, end: endCordinate, distnaceKM: distance)
       ];
-
-      // if (error != null) {
-      //   setState(() => _routingInProgress = false);
-      //   Util.displayErrorSnackBar(
-      //     _scaffoldKey.currentContext!,
-      //     Util.formatString(AppLocalizations.of(context)!.routingErrorText,
-      //         [error.toString()]),
-      //   );
-      // }
-      // return;
-
+      _useStraightline = false;
     }
 
     _routePoiHandler.clearPlaces();
