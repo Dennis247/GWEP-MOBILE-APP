@@ -24,6 +24,7 @@ import 'dart:io';
 
 import 'package:RefApp/common/file_utility.dart';
 import 'package:RefApp/core/model/abate_details.dart';
+import 'package:RefApp/core/utils/custom_map_styles.dart';
 import 'package:RefApp/core/utils/navigator.dart';
 import 'package:RefApp/core/widgets/loading_indicator.dart';
 import 'package:animated_floating_buttons/widgets/animated_floating_action_button.dart';
@@ -96,6 +97,7 @@ class _LandingScreenState extends State<LandingScreen> with Positioning {
   ConsentUserReply? _consentState;
   MapMarker? _routeFromMarker;
   Place? _routeFromPlace;
+  CustomMapStyleExample? _customMapStyleExample;
 
   @override
   void dispose() {
@@ -128,7 +130,7 @@ class _LandingScreenState extends State<LandingScreen> with Positioning {
                 builder: (context, value, child) => Text(
                   DataStore.selectedHub == Constants.abatePoints
                       ? DataStore.selectedHub
-                      : '${DataStore.selectedHub} village',
+                      : '${DataStore.selectedHub} Kebele',
                   style:
                       TextStyle(fontWeight: FontWeight.bold, fontSize: 2.0.h),
                 ),
@@ -235,25 +237,45 @@ class _LandingScreenState extends State<LandingScreen> with Positioning {
                       value.isLoadingWaterPointData
                           ? LoadingIndicator2()
                           : SizedBox()),
-              Positioned(
-                child: FloatingActionButton(
-                    child: Icon(Icons.gps_fixed),
-                    mini: true,
-                    onPressed: () {
-                      GeoCoordinates coordinates = lastKnownLocation != null
-                          ? lastKnownLocation!.coordinates
-                          : Positioning.initPosition;
-                      _hereMapController.camera
-                          .lookAtPointWithGeoOrientationAndMeasure(
-                        coordinates,
-                        GeoOrientationUpdate(double.nan, double.nan),
-                        MapMeasure(MapMeasureKind.distance,
-                            Positioning.initDistanceToEarth),
-                      );
-                    },
-                    backgroundColor: AppColors.green),
-                left: 3.8.w,
-                bottom: 2.5.h,
+              Consumer<WaterPointViewModel>(
+                builder: (context, value, child) => Positioned(
+                  child: Column(
+                    children: [
+                      value.isDownloadingData
+                          ? SizedBox(
+                              width: 15.0.w,
+                              height: 15.0.w,
+                              child: Column(
+                                mainAxisAlignment: MainAxisAlignment.start,
+                                children: [LoadingIndicator(), Text("Syncing")],
+                              ),
+                            )
+                          : Text(''),
+                      SizedBox(
+                        height: 2.0.h,
+                      ),
+                      FloatingActionButton(
+                          child: Icon(Icons.gps_fixed),
+                          mini: true,
+                          onPressed: () {
+                            GeoCoordinates coordinates =
+                                lastKnownLocation != null
+                                    ? lastKnownLocation!.coordinates
+                                    : Positioning.initPosition;
+                            _hereMapController.camera
+                                .lookAtPointWithGeoOrientationAndMeasure(
+                              coordinates,
+                              GeoOrientationUpdate(double.nan, double.nan),
+                              MapMeasure(MapMeasureKind.distance,
+                                  Positioning.initDistanceToEarth),
+                            );
+                          },
+                          backgroundColor: AppColors.green),
+                    ],
+                  ),
+                  left: 3.8.w,
+                  bottom: 2.5.h,
+                ),
               )
             ]),
             floatingActionButton: _mapInitSuccess ? _buildFAB2() : null,
@@ -268,12 +290,18 @@ class _LandingScreenState extends State<LandingScreen> with Positioning {
 
   void setMapSTyle({required MapScheme mapScheme}) {
     DataStore.mapScheme = mapScheme;
-    _hereMapController.mapScene
-        .loadSceneForMapScheme(mapScheme, (MapError? error) {});
+
+    _customMapStyleExample?.loadSelectedMapStyle(mapScheme: mapScheme);
+
+    // _hereMapController.mapScene.loadSceneForMapScheme(mapScheme,
+    //     (MapError? error) {
+    //   log(error.toString());
+    // });
   }
 
   void _onMapCreated(HereMapController hereMapController) {
     _hereMapController = hereMapController;
+    _customMapStyleExample = CustomMapStyleExample(hereMapController);
 
     hereMapController.mapScene.loadSceneForMapScheme(DataStore.mapScheme,
         (MapError? error) {
@@ -330,7 +358,7 @@ class _LandingScreenState extends State<LandingScreen> with Positioning {
   }
 
   void setMarkers(List<WaterBodyPoint> waterBodyPoints) {
-    waterBodyPoints.take(250).forEach((element) {
+    waterBodyPoints.take(300).forEach((element) {
       _hereMapController.pinWidget(
           _mapPin(element),
           new GeoCoordinates(
@@ -959,7 +987,7 @@ class _LandingScreenState extends State<LandingScreen> with Positioning {
                   context: context,
                   child: SearchBottomSheet(
                     sourceList: DataStore.hubAreas,
-                    title: "Select Village",
+                    title: "Select Kebele",
                   ),
                   isDismissible: true,
                 );
@@ -969,7 +997,7 @@ class _LandingScreenState extends State<LandingScreen> with Positioning {
                   _getWaterPointData();
                 }
               },
-              title: 'Villages'),
+              title: 'Kebeles'),
           getFabWidget(
               bgColor: AppColors.dashPurple,
               iconData: FontAwesomeIcons.thumbsUp,

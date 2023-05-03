@@ -14,7 +14,7 @@ class WaterTableService {
   static Future<List<WaterBodyPointTable>> getAllWaterBodyPoints() async {
     final box = getWaterBodyPoints();
     final data = box.values
-        .where((element) => element.hubArea == DataStore.selectedHub)
+        .where((element) => element.hubName == DataStore.selectedHub)
         .toList()
         .cast<WaterBodyPointTable>();
 

@@ -251,7 +251,10 @@ class WaterPointService {
     }
   }
 
+  static bool boolisGettingWaterBodies = false;
   static Future<void> getAllWaterBodyPointsForMobile() async {
+    if (boolisGettingWaterBodies) return;
+    boolisGettingWaterBodies = true;
     try {
       String url = ApiUrls.getAllWaterPointData;
       final json = await RequestHelper.getRequest(url);
@@ -263,5 +266,6 @@ class WaterPointService {
     } catch (e) {
       log(e.toString());
     }
+    boolisGettingWaterBodies = false;
   }
 }

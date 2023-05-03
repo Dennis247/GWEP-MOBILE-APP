@@ -108,6 +108,7 @@ class _MyAppState extends State<MyApp> {
           ChangeNotifierProvider(create: (context) => RegisterViewModel()),
         ],
         child: MaterialApp(
+          navigatorKey: navigatorKey,
           localizationsDelegates: [
             AppLocalizations.delegate,
             GlobalMaterialLocalizations.delegate,
